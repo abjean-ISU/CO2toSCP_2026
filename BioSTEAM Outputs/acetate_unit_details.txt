@@ -1,0 +1,395 @@
+DETAILED UNIT OPERATION RESULTS
+============================================================
+
+
+ST101 (StorageTank)
+--------------------------------------------------
+Storage tank                         Units    ST101
+Design              Residence time      hr      168
+                    Total volume       m^3 1.35e+03
+Purchase cost       Tank               USD  4.3e+05
+Total purchase cost                    USD  4.3e+05
+Utility cost                        USD/hr        0
+
+============================================================
+
+
+ST102 (StorageTank)
+--------------------------------------------------
+Storage tank                         Units    ST102
+Design              Residence time      hr      168
+                    Total volume       m^3      266
+Purchase cost       Tank               USD 1.65e+05
+Total purchase cost                    USD 1.65e+05
+Utility cost                        USD/hr        0
+
+============================================================
+
+
+ST103 (StorageTank)
+--------------------------------------------------
+Storage tank                         Units    ST103
+Design              Residence time      hr      168
+                    Total volume       m^3      132
+Purchase cost       Tank               USD 1.32e+05
+Total purchase cost                    USD 1.32e+05
+Utility cost                        USD/hr        0
+
+============================================================
+
+
+M101 (MixTank)
+--------------------------------------------------
+Mix tank                             Units     M101
+Electricity         Power               kW     33.1
+                    Cost            USD/hr     1.06
+Design              Residence time      hr        1
+                    Total volume       m^3      336
+Purchase cost       Tank (x12)         USD 1.28e+06
+Total purchase cost                    USD 1.28e+06
+Utility cost                        USD/hr     1.06
+
+============================================================
+
+
+HX101 (HXutility)
+--------------------------------------------------
+Heat exchanger                                            Units    HX101
+Low pressure steam  Duty                                  kJ/hr 1.28e+08
+                    Flow                                kmol/hr  3.3e+03
+                    Cost                                 USD/hr 1.66e+03
+Design              Area                                   ft^2 2.18e+04
+                    Overall heat transfer coefficient  kW/m^2/K      0.5
+                    Log-mean temperature difference           K     34.9
+                    Fouling correction factor                          1
+                    Operating pressure                      psi       50
+                    Total tube length                        ft       20
+Purchase cost       Floating head                           USD 3.16e+05
+Total purchase cost                                         USD 3.16e+05
+Utility cost                                             USD/hr 1.66e+03
+
+============================================================
+
+
+HP101 (HoldPipe)
+--------------------------------------------------
+Hold pipe                             Units  HP101
+Design              Hold time (min)           2.44
+Total purchase cost                     USD      0
+Utility cost                         USD/hr      0
+
+============================================================
+
+
+HX102 (HXutility)
+--------------------------------------------------
+Heat exchanger                                            Units     HX102
+Chilled water       Duty                                  kJ/hr -1.16e+08
+                    Flow                                kmol/hr  7.67e+04
+                    Cost                                 USD/hr       578
+Design              Area                                   ft^2  1.31e+04
+                    Overall heat transfer coefficient  kW/m^2/K       0.5
+                    Log-mean temperature difference           K      54.4
+                    Fouling correction factor                       0.969
+                    Operating pressure                      psi      14.7
+                    Total tube length                        ft        20
+Purchase cost       Floating head                           USD     2e+05
+Total purchase cost                                         USD     2e+05
+Utility cost                                             USD/hr       578
+
+============================================================
+
+
+R101 (ExtentBasedBioreactor)
+--------------------------------------------------
+Extent based bioreactor                                    Units                 R101
+Electricity         Power                                     kW             2.43e+03
+                    Cost                                  USD/hr                 77.8
+Chilled water       Duty                                   kJ/hr            -3.23e+07
+                    Flow                                 kmol/hr             2.38e+04
+                    Cost                                  USD/hr                  162
+Design              Reactor volume                            m3                  350
+                    Residence time                            hr                 8.33
+                    Vessel type                                              Vertical
+                    Length                                    ft                 52.1
+                    Diameter                                  ft                 17.4
+                    Weight                                    lb             5.86e+04
+                    Wall thickness                            in                0.371
+                    Vessel material                               Stainless steel 316
+Purchase cost       Vertical pressure vessel (x9)            USD             4.02e+06
+                    Platform and ladders (x9)                USD             7.12e+05
+                    Compressor - Compressor(s) (x9)          USD              1.5e+06
+                    Air cooler - Floating head (x9)          USD             3.37e+04
+                    Heat exchanger - Floating head (x9)      USD             5.07e+05
+                    Recirculation pump - Pump (x9)           USD              7.9e+04
+                    Recirculation pump - Motor (x9)          USD             8.26e+03
+                    Agitator - Agitator (x9)                 USD             9.24e+05
+Total purchase cost                                          USD             7.79e+06
+Utility cost                                              USD/hr                  239
+
+============================================================
+
+
+C101 (SolidsCentrifuge)
+--------------------------------------------------
+Solids centrifuge                           Units     C101
+Electricity         Power                      kW      371
+                    Cost                   USD/hr     11.9
+Design              Solids loading         ton/hr     3.75
+                    Number of centrifuges                1
+                    Flow rate               m3/hr      265
+Purchase cost       Centrifuges               USD 1.88e+05
+Total purchase cost                           USD 1.88e+05
+Utility cost                               USD/hr     11.9
+
+============================================================
+
+
+D101 (SprayDryer)
+--------------------------------------------------
+Spray dryer                            Units     D101
+Design              Evaporation rate   lb/hr  2.1e+04
+Purchase cost       Spray dryer          USD 4.95e+05
+Total purchase cost                      USD 4.95e+05
+Utility cost                          USD/hr        0
+
+============================================================
+
+
+ST104 (StorageTank)
+--------------------------------------------------
+Storage tank                         Units   ST104
+Design              Residence time      hr     168
+                    Total volume       m^3     571
+Purchase cost       Tank               USD 2.4e+05
+Total purchase cost                    USD 2.4e+05
+Utility cost                        USD/hr       0
+
+============================================================
+
+
+ST201 (StorageTank)
+--------------------------------------------------
+Storage tank                         Units  ST201
+Design              Residence time      hr    168
+                    Total volume       m^3   0.17
+Purchase cost       Tank               USD  1e+05
+Total purchase cost                    USD  1e+05
+Utility cost                        USD/hr      0
+
+============================================================
+
+
+ST202 (StorageTank)
+--------------------------------------------------
+Storage tank                         Units  ST202
+Design              Residence time      hr    168
+                    Total volume       m^3 0.0335
+Purchase cost       Tank               USD  1e+05
+Total purchase cost                    USD  1e+05
+Utility cost                        USD/hr      0
+
+============================================================
+
+
+ST203 (StorageTank)
+--------------------------------------------------
+Storage tank                         Units  ST203
+Design              Residence time      hr    168
+                    Total volume       m^3 0.0166
+Purchase cost       Tank               USD  1e+05
+Total purchase cost                    USD  1e+05
+Utility cost                        USD/hr      0
+
+============================================================
+
+
+SM101 (MixTank)
+--------------------------------------------------
+Mix tank                             Units    SM101
+Electricity         Power               kW  0.00468
+                    Cost            USD/hr  0.00015
+Design              Residence time      hr        1
+                    Total volume       m^3   0.0475
+Purchase cost       Tank               USD 3.76e+03
+Total purchase cost                    USD 3.76e+03
+Utility cost                        USD/hr  0.00015
+
+============================================================
+
+
+SHX101 (HXutility)
+--------------------------------------------------
+Heat exchanger                                            Units   SHX101
+Low pressure steam  Duty                                  kJ/hr 1.81e+04
+                    Flow                                kmol/hr    0.468
+                    Cost                                 USD/hr    0.235
+Design              Area                                   ft^2      3.1
+                    Overall heat transfer coefficient  kW/m^2/K      0.5
+                    Log-mean temperature difference           K     34.9
+                    Fouling correction factor                          1
+                    Operating pressure                      psi       50
+                    Total tube length                        ft       20
+Purchase cost       Double pipe                             USD 4.24e+03
+Total purchase cost                                         USD 4.24e+03
+Utility cost                                             USD/hr    0.235
+
+============================================================
+
+
+SHP101 (HoldPipe)
+--------------------------------------------------
+Hold pipe                             Units  SHP101
+Design              Hold time (min)            2.44
+Total purchase cost                     USD       0
+Utility cost                         USD/hr       0
+
+============================================================
+
+
+SHX102 (HXutility)
+--------------------------------------------------
+Heat exchanger                                            Units    SHX102
+Chilled water       Duty                                  kJ/hr -1.64e+04
+                    Flow                                kmol/hr      10.9
+                    Cost                                 USD/hr     0.082
+Design              Area                                   ft^2      1.86
+                    Overall heat transfer coefficient  kW/m^2/K       0.5
+                    Log-mean temperature difference           K      54.4
+                    Fouling correction factor                       0.969
+                    Operating pressure                      psi      14.7
+                    Total tube length                        ft        20
+Purchase cost       Double pipe                             USD  3.41e+03
+Total purchase cost                                         USD  3.41e+03
+Utility cost                                             USD/hr     0.082
+
+============================================================
+
+
+SSP101 (Splitter)
+--------------------------------------------------
+Splitter               Units  SSP101
+Total purchase cost      USD       0
+Utility cost          USD/hr     NaN
+
+============================================================
+
+
+SSP102 (Splitter)
+--------------------------------------------------
+Splitter               Units  SSP102
+Total purchase cost      USD       0
+Utility cost          USD/hr     NaN
+
+============================================================
+
+
+SR101 (SeedBioreactor)
+--------------------------------------------------
+Seed bioreactor                                     Units                SR101
+Electricity         Power                              kW               0.0104
+                    Cost                           USD/hr             0.000333
+Chilled water       Duty                            kJ/hr                -8.38
+                    Flow                          kmol/hr              0.00624
+                    Cost                           USD/hr             4.19e-05
+Design              Reactor volume                     m3               0.0438
+                    Residence time                     hr                  388
+                    Vessel type                                       Vertical
+                    Length                             ft                 2.61
+                    Diameter                           ft                0.869
+                    Weight                             lb                 87.4
+                    Wall thickness                     in                 0.25
+                    Vessel material                        Stainless steel 316
+Purchase cost       Vertical pressure vessel          USD             1.35e+04
+                    Platform and ladders              USD             1.04e+03
+                    Heat exchanger - Double pipe      USD                 9.46
+                    Recirculation pump - Pump         USD             6.23e+03
+                    Recirculation pump - Motor        USD             5.67e-59
+                    Agitator - Agitator               USD                  512
+Total purchase cost                                   USD             2.13e+04
+Utility cost                                       USD/hr             0.000375
+
+============================================================
+
+
+SR102 (SeedBioreactor)
+--------------------------------------------------
+Seed bioreactor                                     Units                SR102
+Electricity         Power                              kW                0.208
+                    Cost                           USD/hr              0.00666
+Chilled water       Duty                            kJ/hr                 -168
+                    Flow                          kmol/hr                0.125
+                    Cost                           USD/hr             0.000838
+Design              Reactor volume                     m3                0.877
+                    Residence time                     hr                  388
+                    Vessel type                                       Vertical
+                    Length                             ft                 7.08
+                    Diameter                           ft                 2.36
+                    Weight                             lb                  644
+                    Wall thickness                     in                 0.25
+                    Vessel material                        Stainless steel 316
+Purchase cost       Vertical pressure vessel          USD             3.21e+04
+                    Platform and ladders              USD              4.4e+03
+                    Heat exchanger - Double pipe      USD                  189
+                    Recirculation pump - Pump         USD             6.23e+03
+                    Recirculation pump - Motor        USD             8.38e-17
+                    Agitator - Agitator               USD             2.82e+03
+Total purchase cost                                   USD             4.58e+04
+Utility cost                                       USD/hr               0.0075
+
+============================================================
+
+
+SR103 (SeedBioreactor)
+--------------------------------------------------
+Seed bioreactor                                     Units                SR103
+Electricity         Power                              kW                 4.16
+                    Cost                           USD/hr                0.133
+Chilled water       Duty                            kJ/hr            -3.35e+03
+                    Flow                          kmol/hr                  2.5
+                    Cost                           USD/hr               0.0168
+Design              Reactor volume                     m3                 17.5
+                    Residence time                     hr                  388
+                    Vessel type                                       Vertical
+                    Length                             ft                 19.2
+                    Diameter                           ft                 6.41
+                    Weight                             lb             7.11e+03
+                    Wall thickness                     in                0.375
+                    Vessel material                        Stainless steel 316
+Purchase cost       Vertical pressure vessel          USD             1.16e+05
+                    Platform and ladders              USD             1.87e+04
+                    Heat exchanger - Double pipe      USD             3.78e+03
+                    Recirculation pump - Pump         USD             6.23e+03
+                    Recirculation pump - Motor        USD                0.226
+                    Agitator - Agitator               USD             1.56e+04
+Total purchase cost                                   USD              1.6e+05
+Utility cost                                       USD/hr                 0.15
+
+============================================================
+
+
+WWT101 (Mixer)
+--------------------------------------------------
+Mixer                  Units  WWT101
+Total purchase cost      USD       0
+Utility cost          USD/hr     NaN
+
+============================================================
+
+
+WWT102 (_SludgeSettler)
+--------------------------------------------------
+Sludge settler         Units  WWT102
+Total purchase cost      USD       0
+Utility cost          USD/hr     NaN
+
+============================================================
+
+
+RCY101 (Splitter)
+--------------------------------------------------
+Splitter               Units  RCY101
+Total purchase cost      USD       0
+Utility cost          USD/hr     NaN
+
+============================================================
