@@ -178,6 +178,24 @@ Stored as the `ECONOMICS` singleton (`EconomicBasis` dataclass) in `common/param
 | `ammonia_price` | $0.50 | $/kg NH₃ | BusinessAnalytiq commodity price database | §9.4 |
 | `wwt_organic_removal_cost` | $0.33 | $/kg organic removed | Seider et al. — WWT operating cost basis | §9.4 |
 
+### 4.5 LCA steam-to-natural-gas conversion parameters
+
+Used exclusively in `common/lca_export.py` to convert low-pressure steam demand (kmol/hr, from BioSTEAM heat utilities) into a natural gas mass flow (kg/hr) for the LCA inventory Operational Flows sheet.
+
+| Parameter | Value | Units | Literature source | Framework |
+|-----------|-------|-------|------------------|-----------|
+| `BOILER_EFFICIENCY` | 0.80 | fraction of LHV delivered as steam | Engineering reference — Turton et al., *Analysis, Synthesis and Design of Chemical Processes*, 7th ed. | §8 LCA |
+| `NG_LHV_KJ_KG` | 50,000 | kJ/kg | Engineering Toolbox, https://www.engineeringtoolbox.com/fuels-higher-calorific-values-d_169.html — methane/natural gas LHV | §8 LCA |
+
+**Derived conversion factor** (computed in `common/lca_export.py`, not stored as a parameter):
+
+| Quantity | Formula | Value |
+|----------|---------|-------|
+| LPS total enthalpy `_LPS_H_KJ_KMOL` | BioSTEAM `lps.H` at T = 412.189 K, P = 344,738 Pa | 47,646.33 kJ/kmol |
+| `_NG_KG_PER_KMOL_STEAM` | `H_lps / (BOILER_EFFICIENCY × NG_LHV_KJ_KG)` | 47,646.33 / (0.80 × 50,000) = **1.1912 kg NG / kmol steam** |
+
+`H_lps` is the total stream enthalpy of the BioSTEAM LPS agent relative to liquid water at 298.15 K (25 °C), and therefore includes both the sensible heat to raise feedwater from 25 °C to 139 °C and the latent heat of vaporization. Using `H` rather than `hvap` (latent heat only, 38,682 kJ/kmol) is correct because an industrial boiler heats feedwater from ambient before evaporating it.
+
 ---
 
 ## Part 5 — Nutrients recipe
