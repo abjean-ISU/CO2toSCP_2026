@@ -204,6 +204,21 @@ NH3_NUTRIENTS_EXCESS: float = 0.05
 # near-zero effluent NH3.  The Nutrients supplement does fully resolve the
 # Nutrients effluent (phase='l', non-volatile) — the intended benefit.
 
+BOILER_EFFICIENCY: float = 0.80
+# Steam boiler thermal efficiency (fraction) — fraction of natural gas LHV delivered as steam
+# enthalpy.  Standard engineering reference for industrial package boilers
+# (Turton et al., Analysis, Synthesis and Design of Chemical Processes, 7th ed.).
+# Used by common/lca_export.py to convert low-pressure steam demand to natural gas mass flow
+# for the LCA inventory.  Framework §8 LCA parameter.
+
+NG_LHV_KJ_KG: float = 50_000.0
+# Natural gas lower heating value (LHV) — 50 MJ/kg = 50,000 kJ/kg.
+# Source: Engineering Toolbox,
+# https://www.engineeringtoolbox.com/fuels-higher-calorific-values-d_169.html
+# Methane-proxy basis (pure CH4 LHV); representative for pipeline-quality natural gas.
+# Used by common/lca_export.py in the steam-to-natural-gas LCA conversion.
+# Framework §8 LCA parameter.
+
 DC_Q_MAX_M3S: float = 0.577
 # Maximum liquid throughput per droplet column (DC101/DC102), m³/s — Framework §4a.
 # Baseline liquid holdup ≈ 0.2%: V_column = π*(5m)²*4m = 314.2 m³;

@@ -32,7 +32,9 @@ from common.lca_config import (
 from common.nutrients import build_nutrients_properties
 from common.operating_hours import effective_operating_hours
 from common.parameters import (
+    BOILER_EFFICIENCY,
     ECONOMICS,
+    NG_LHV_KJ_KG,
     NUTRIENTS_RECIPE,
     PRODUCTION_TARGET_MT_YR,
     EconomicBasis,
@@ -44,6 +46,33 @@ from common.parameters import (
 
 _MW_H2O: float = 18.015       # kg/kmol — steam / chilled-water molar mass
 _RHO_H2O: float = 1000.0      # kg/m³  — liquid water density for m³ conversion
+
+# ---------------------------------------------------------------------------
+# Natural gas conversion factor — derived from BioSTEAM LPS thermodynamics
+# ---------------------------------------------------------------------------
+# BioSTEAM low_pressure_steam agent: T = 412.189 K (139 °C), P = 344,738 Pa (3.40 atm).
+# H [kJ/kmol] = total stream enthalpy relative to liquid water at 298.15 K (25 °C).
+# This equals sensible heat (liquid 25→139 °C) + latent heat of vaporization — i.e.,
+# the full thermal energy the boiler must supply per kmol of steam generated.
+# Using H rather than hvap (latent only) is correct because a real boiler heats
+# feedwater from ambient before evaporating it.
+#
+# Conversion chain (Framework §8 / LCA parameter registry):
+#   Q_boiler [kJ/hr] = kmol_steam/hr × H_lps [kJ/kmol]
+#   m_NG [kg/hr]     = Q_boiler / (BOILER_EFFICIENCY × NG_LHV_KJ_KG)
+#   → kg NG/kmol steam = H_lps / (BOILER_EFFICIENCY × NG_LHV_KJ_KG)
+#
+# Parameters:
+#   BOILER_EFFICIENCY = 0.80   (common/parameters.py — Turton et al.)
+#   NG_LHV_KJ_KG      = 50,000 kJ/kg (common/parameters.py — Engineering Toolbox)
+#   H_lps              = 47,646.33 kJ/kmol (BioSTEAM thermodynamics, computed below)
+_lps_agent = next(
+    a for a in bst.HeatUtility.heating_agents if a.ID == 'low_pressure_steam'
+)
+_LPS_H_KJ_KMOL: float = _lps_agent.H  # kJ/kmol — total enthalpy at LPS conditions
+_NG_KG_PER_KMOL_STEAM: float = _LPS_H_KJ_KMOL / (BOILER_EFFICIENCY * NG_LHV_KJ_KG)
+# = 47,646.33 / (0.80 × 50,000) ≈ 1.1912 kg NG / kmol steam
+# = 0.0661 kg NG / kg steam
 
 _ROUTE_TITLES: dict[str, str] = {
     'fructose':         'Fructose',
@@ -417,6 +446,12 @@ def _apply_conversion(
 
     elif acc_type == 'utility_sum' and units == 'kg':
         return raw * _MW_H2O                        # kmol → kg (steam)
+
+    elif acc_type == 'utility_sum' and units == 'kg_ng':
+        return raw * _NG_KG_PER_KMOL_STEAM          # kmol steam → kg natural gas
+        # kg NG = kmol_steam × H_lps [kJ/kmol] / (BOILER_EFFICIENCY × NG_LHV [kJ/kg])
+        # H_lps = BioSTEAM total LPS enthalpy (sensible from 25 °C + latent) = 47,646 kJ/kmol
+        # BOILER_EFFICIENCY = 0.80, NG_LHV = 50,000 kJ/kg → factor ≈ 1.191 kg NG/kmol steam
 
     elif acc_type == 'utility_sum' and units == 'm3':
         return raw * _MW_H2O / _RHO_H2O             # kmol → m³ (chilled water)

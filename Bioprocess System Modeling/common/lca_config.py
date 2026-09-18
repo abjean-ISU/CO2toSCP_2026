@@ -101,6 +101,7 @@ ELEMENTARY_FLOWS: dict[str, str] = {
     'Electricity':           'Relevant mix for SA',
     'Water':                 'Water, (elementary)',
     'Steam':                 'Natural gas combustion / steam injection at turbine',
+    'NaturalGas':            'Natural gas combustion / steam injection at turbine',
     'Chilled Water':         'Water, Process + cooling (elementary)',
     'WWT':                   'Drinking water/wastewater treatment US (2213)',
     'O2_air_in':             'Resource, air',
@@ -269,14 +270,17 @@ def _liquid_route_specs(
         },
         {
             'section': 'ins',
-            'material': 'Low Pressure Steam',
-            'ef_key':   'Steam',
-            'units':    'kg',
+            'material': 'Natural Gas (boiler)',
+            'ef_key':   'NaturalGas',
+            'units':    'kg_ng',
             'scope':    ['HX101', 'SHX101'],
             'accessor': ('utility_sum', ['HX101', 'SHX101'], 'low_pressure_steam'),
             # HX101: production media heater to 134 °C (Framework §9.2)
             # SHX101: seed media heater to 134 °C (Framework §6)
             # HX102 uses chilled_water (30 °C target < cooling_water T_supply).
+            # units='kg_ng' triggers steam→NG conversion in lca_export._apply_conversion:
+            #   kg NG = kmol steam × H_lps [kJ/kmol] / (BOILER_EFFICIENCY × NG_LHV [kJ/kg])
+            # where H_lps = BioSTEAM LPS total enthalpy (sensible + latent from 25 °C feedwater).
         },
         {
             'section': 'ins',
@@ -563,14 +567,15 @@ OP_FLOW_SPECS: dict[str, list[dict]] = {
         },
         {
             'section': 'ins',
-            'material': 'Low Pressure Steam (seed only)',
-            'ef_key':   'Steam',
-            'units':    'kg',
+            'material': 'Natural Gas, boiler (seed only)',
+            'ef_key':   'NaturalGas',
+            'units':    'kg_ng',
             'scope':    ['SHX101'],
             'accessor': ('utility_sum', ['SHX101'], 'low_pressure_steam'),
             # Gas ferm production media sterilised by UF101 (no steam).
             # SHX101 (seed media heater) still uses steam — Framework §6.
             # HX101/HX102 are gas aftercoolers (chilled water, not steam).
+            # units='kg_ng' triggers steam→NG conversion (same formula as liquid routes).
         },
         {
             'section': 'ins',
