@@ -10,18 +10,22 @@ Shade encodes perturbation direction — matching the TEA individual tornado sty
   dark shade + solid fill = low perturbation (extends left)
   light shade + '//' hatch = high perturbation (extends right)
 
+Y-axis: variable name (top line) + (lo, bold-BL, hi) parameter range annotation
+(bottom line) read from 'Variable Low/Baseline/High' columns in the Excel,
+matching the Combined_tornado.png reference style.
+
 Usage:  python lca_tornado.py
 Output: LCA_tornado.png (200 dpi) written to the same directory.
 Requirements: pip install pandas openpyxl matplotlib numpy
 """
 
 import colorsys
-import numpy as np
 import os
 
 import matplotlib.colors as mcolors
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
+from matplotlib.transforms import blended_transform_factory
 import pandas as pd
 
 import pathlib
@@ -44,7 +48,7 @@ ROUTE_DISPLAY = {
     'Formic Acid':      'Formic Acid',
     'Gas Fermentation': 'Gas Fermentation',
 }
-ROUTE_ORDER    = ['Fructose', 'Acetic Acid', 'Formic Acid', 'Gas Fermentation']
+ROUTE_ORDER = ['Fructose', 'Acetic Acid', 'Formic Acid', 'Gas Fermentation']
 
 # Per-route dark/light shades — fixed HLS lightness targets, matching TEA _plot_tornado.
 # Varying only L (not H or S) keeps both shades as the same recognisable colour.
@@ -72,12 +76,10 @@ plt.rcParams.update({
     'figure.facecolor': 'white',
     'axes.facecolor':   'white',
     'hatch.linewidth':  1.5,
+    # dejavusans keeps $\mathbf{}$ glyphs visually consistent with surrounding
+    # sans-serif text — matching TEA _plot_tornado range-label convention.
+    'mathtext.fontset': 'dejavusans',
 })
-
-
-def symlog(x):
-    """Symmetric log transform: sign(x) * log10(|x| + 1)."""
-    return np.sign(x) * np.log10(np.abs(x) + 1)
 
 
 # --------------------------------------------------------------------------
@@ -102,11 +104,22 @@ if _BOTTOM_PIN in var_order:
     var_order.remove(_BOTTOM_PIN)
     var_order.insert(0, _BOTTOM_PIN)
 
+# Build per-variable parameter range metadata from Excel columns.
+# Variable Low/Baseline/High describe the SA parameter range (not the GWP impact).
+# NaN hi values (e.g. Capital Goods has no high perturbation) replaced with em dash.
+var_meta: dict = {}
+for var in var_order:
+    vrows  = df[df['Variable'] == var]
+    lo_raw = vrows['Variable Low'].dropna().iloc[0]      if not vrows['Variable Low'].dropna().empty      else '\u2014'
+    bl_raw = vrows['Variable Baseline'].dropna().iloc[0] if not vrows['Variable Baseline'].dropna().empty else 'Baseline'
+    hi_raw = vrows['Variable High'].dropna().iloc[0]     if not vrows['Variable High'].dropna().empty     else '\u2014'
+    var_meta[var] = {'lo': str(lo_raw), 'bl': str(bl_raw), 'hi': str(hi_raw)}
+
 n_vars   = len(var_order)
 n_routes = len(ROUTE_ORDER)
 bar_h    = 0.22   # center-to-center spacing between adjacent bars in a cluster
 bar_w    = 0.17   # actual bar width (narrower than spacing → small gap between bars)
-y_sp     = 1.5   # vertical spacing between variable clusters
+y_sp     = 1.5    # vertical spacing between variable clusters
 y_base   = [i * y_sp for i in range(n_vars)]
 offsets  = [(j - (n_routes - 1) / 2.0) * bar_h for j in range(n_routes)]
 
@@ -115,14 +128,20 @@ offsets  = [(j - (n_routes - 1) / 2.0) * bar_h for j in range(n_routes)]
 # --------------------------------------------------------------------------
 fig, ax = plt.subplots(figsize=(12, max(6, n_vars * y_sp * 0.65)))
 
+# Alternating row backgrounds — even-indexed variables (counting from bottom)
+for i in range(n_vars):
+    if i % 2 == 0:
+        ax.axhspan(y_base[i] - y_sp / 2.0, y_base[i] + y_sp / 2.0,
+                   color='#f0f0f0', zorder=0)
+
 for i, var in enumerate(var_order):
     var_df = df[df['Variable'] == var]
     for j, route in enumerate(ROUTE_ORDER):
         row = var_df[var_df['System'] == route]
         if row.empty:
             continue
-        row   = row.iloc[0]
-        yp = y_base[i] + offsets[j]
+        row = row.iloc[0]
+        yp  = y_base[i] + offsets[j]
 
         d_lo = row['pct_low']
         d_hi = row['pct_high']
@@ -138,29 +157,55 @@ for i, var in enumerate(var_order):
                     edgecolor='black', linewidth=0.5, zorder=3)
 
 # Baseline reference line
-ax.axvline(0, color=BASELINE_COLOR, linewidth=1.5, linestyle='--', alpha=0.8, zorder=4)
+ax.axvline(0, color=BASELINE_COLOR, linewidth=1.0, linestyle='--', alpha=0.8, zorder=4)
 
 # --------------------------------------------------------------------------
 # Axes
 # --------------------------------------------------------------------------
-ax.set_yticks(y_base)
-ax.set_yticklabels(var_order)
 
+# Symmetric-log x-axis (linthresh=1% → linear region from −1 to +1),
+# matching TEA _plot_tornado reference style.
 ax.xaxis.set_major_formatter(
-    plt.FuncFormatter(lambda x, _: f'{x:+.0f}%' if x != 0 else '0')
+    plt.FuncFormatter(lambda x, _: '0' if x == 0 else f'{x:+.0f}%')
 )
 ax.tick_params(axis='x', labelsize=12)
 
-all_abs = pd.concat([df['pct_low'].dropna(), df['pct_high'].dropna()]).abs()
-xmax    = all_abs.max() * 1.3
-ax.set_xlim(-xmax, xmax)
+# X-limits: asymmetric — each side expands 35% beyond its own extreme.
+all_pct = pd.concat([df['pct_low'].dropna(), df['pct_high'].dropna()])
+if not all_pct.empty:
+    min_val = all_pct.min()
+    max_val = all_pct.max()
+    x_lo = min_val * 1.35 if min_val < 0 else -1.0
+    x_hi = max_val * 1.35 if max_val > 0 else  1.0
+    ax.set_xlim(x_lo, x_hi)
 
-ax.set_xlabel('Δ GWP (% of baseline)', fontsize=13)
+ax.set_xlabel('% Change in GWP from baseline', fontsize=13)
 
-ax.xaxis.grid(True, color='#CCCCCC', linestyle='--', linewidth=0.5, alpha=0.7, zorder=0)
+# Y-axis: two-line custom labels (variable name + parameter range annotation).
+# Baseline value bolded via mathtext $\mathbf{}$ with dejavusans fontset so
+# the glyph matches the surrounding sans-serif text — same convention as TEA
+# individual tornado _make_range_label.
+ax.set_yticks(y_base)
+ax.set_yticklabels([])
+ax.tick_params(axis='y', length=0)
+
+trans   = blended_transform_factory(ax.transAxes, ax.transData)
+x_label = -0.02   # axes-coord x: just left of the left spine
+for i, var in enumerate(var_order):
+    meta      = var_meta[var]
+    range_str = f'({meta["lo"]}, $\\mathbf{{{meta["bl"]}}}$, {meta["hi"]})'
+    # Variable name — slightly above cluster centre
+    ax.text(x_label, y_base[i] + 0.10, var,
+            transform=trans, ha='right', va='bottom', fontsize=11)
+    # Range annotation — slightly below cluster centre, smaller and gray
+    ax.text(x_label, y_base[i] - 0.10, range_str,
+            transform=trans, ha='right', va='top', fontsize=9, color='#555555')
+
+ax.xaxis.grid(True, color='#dddddd', linestyle='--', linewidth=0.5, alpha=0.8, zorder=1)
 ax.set_axisbelow(True)
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
+ax.set_ylim(y_base[0] - y_sp / 2.0, y_base[-1] + y_sp / 2.0)
 
 # --------------------------------------------------------------------------
 # Legend: route colour patches + shade/direction convention patches.
@@ -175,7 +220,7 @@ for route in ROUTE_ORDER:
         mpatches.Patch(
             facecolor=ROUTE_COLORS[route],
             edgecolor='#444444', linewidth=0.8,
-            label=f"{ROUTE_DISPLAY[route]}  (baseline {base_gwp:.1f} kg CO₂-eq / kg SCP)",
+            label=f"{ROUTE_DISPLAY[route]}  (baseline {base_gwp:.1f} kg CO\u2082-eq / kg SCP)",
         )
     )
 # Hatch convention — light shade + hatch for high, dark shade for low
@@ -203,7 +248,6 @@ ax.legend(handles=legend_handles_ordered, fontsize=11, loc='upper center',
 # --------------------------------------------------------------------------
 # Save
 # --------------------------------------------------------------------------
-plt.tight_layout()
 fname = os.path.join(OUTPUT_DIR, 'LCA_tornado.png')
 plt.savefig(fname, dpi=DPI, bbox_inches='tight', facecolor='white')
 plt.close()
