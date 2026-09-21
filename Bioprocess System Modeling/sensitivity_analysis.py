@@ -27,7 +27,9 @@ import colorsys
 import matplotlib
 matplotlib.use('Agg')   # non-GUI backend — Framework §11 / plan spec
 import matplotlib.colors as mcolors
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
+from matplotlib.transforms import blended_transform_factory
 import biosteam as bst
 import pandas as pd
 
@@ -124,6 +126,15 @@ _ROUTE_COLORS: dict[str, str] = {
     'acetate':          '#56B4E9',  # sky blue
     'formate':          '#009E73',  # bluish green
     'gas_fermentation': '#CC79A7',  # reddish purple
+}
+
+# Display names — canonical copy for plots originating in this module.
+# Mirrors additional_analyses._ROUTE_DISPLAY; kept here to avoid circular import.
+_ROUTE_DISPLAY: dict[str, str] = {
+    'fructose':         'Fructose',
+    'acetate':          'Acetic Acid',
+    'formate':          'Formic Acid',
+    'gas_fermentation': 'Gas Fermentation',
 }
 
 _OUTPUTS_DIR: pathlib.Path = pathlib.Path(__file__).parent / 'outputs'
@@ -495,15 +506,145 @@ def _export_sa_excel(
 
 
 # ---------------------------------------------------------------------------
+# Tornado plot helpers
+# ---------------------------------------------------------------------------
+
+def _fmt_param_val(v: float) -> str:
+    """Format a numeric parameter value for the tornado y-axis range annotation.
+
+    Chooses the minimum decimal places that preserves meaningful precision:
+      integers  → no decimal point
+      |v| ≥ 10  → 1 decimal place
+      |v| ≥ 0.1 → 2 decimal places
+      otherwise → 3 decimal places
+    Framework §11 range-label helper.
+    """
+    if v == int(v):
+        return str(int(v))
+    if abs(v) >= 10:
+        return f'{v:.1f}'
+    if abs(v) >= 0.1:
+        return f'{v:.2f}'
+    return f'{v:.3f}'
+
+
+# Fields stored as a [0, 1] fraction representing a percentage — displayed ×100
+# with a % suffix in range annotations.  Framework §11 range-label convention.
+_FRACTION_AS_PCT_FIELDS: frozenset[str] = frozenset({
+    'epsilon',
+    'D_margin',
+    'target_titer_fraction',
+    'CENTRIFUGE_RECOVERY',
+    'WWT_WATER_RECYCLE_FRACTION',
+})
+
+
+def _fmt_pct_val(v_fraction: float) -> str:
+    """Format a [0, 1] fraction as a clean percentage string (e.g. 0.80 → '80%').
+
+    Returns an integer percentage for whole-number values (e.g. '80%'), one
+    decimal place for non-integer values (e.g. '87.5%').  Framework §11.
+    """
+    pct = v_fraction * 100.0
+    if pct == int(pct):
+        return f'{int(pct)}%'
+    return f'{pct:.1f}%'
+
+
+def _fmt_holdup_pct(v: float) -> str:
+    """Format a liquid holdup percentage using minimal digits.
+
+    Values below 0.1% kept at 2 decimal places (e.g. 0.02 → '0.02%').
+    Higher values rounded to 1 decimal place; trailing '.0' stripped
+    (e.g. 3.986 rounds to 4.0 → '4%').  Framework §4a / §11.
+    """
+    if v < 0.1:
+        return f'{v:.2f}%'
+    rounded = round(v, 1)
+    if rounded == int(rounded):
+        return f'{int(rounded)}%'
+    return f'{rounded:.1f}%'
+
+
+def _make_range_label(param: '_SAParam', df: pd.DataFrame, route: str) -> str:
+    """Return a '(lo, BL_bold, hi)' annotation string for a tornado y-axis row.
+
+    is_relative params (feedstock, CAPEX, nutrients): unified ±% offset notation
+    ('-50%, baseline, +50%') — nutrients previously used ×factor notation, now
+    consistent with feedstock/CAPEX.
+    Fraction-as-pct params (epsilon, D_margin, etc.): stored as [0, 1] fraction,
+    displayed ×100 with % suffix (e.g. 0.80 → '80%').
+    DC_Q_MAX_M3S: converted from m³/s to % liquid holdup via §4a formula.
+    All other absolute params: numeric lo / base / hi values as-is.
+    Directions skipped for *route* appear as '—'.
+    Framework §11 / plan spec.
+    """
+    sub = df[df['Parameter'] == param.field]
+    base_val = sub['Base param value'].iloc[0] if len(sub) else None
+
+    if param.is_relative:
+        # All relative params use ±% offset notation.  Nutrients previously used
+        # ×factor notation — unified here for consistency.
+        lo_pct = (param.lo - 1.0) * 100.0
+        hi_pct = (param.hi - 1.0) * 100.0
+        lo_str = f'{lo_pct:.0f}%'
+        hi_str = f'+{hi_pct:.0f}%'
+        return f'({lo_str}, $\\mathbf{{baseline}}$, {hi_str})'
+
+    if param.field in _FRACTION_AS_PCT_FIELDS:
+        # Stored as fraction [0, 1] representing a %; display ×100 with % suffix.
+        # Base from OAT records = actual route baseline (e.g. epsilon varies per route).
+        # % must sit outside $\mathbf{}$ to avoid mathtext ParseFatalException.
+        lo_str = _fmt_pct_val(param.lo) if route not in param.skip_lo else '\u2014'
+        hi_str = _fmt_pct_val(param.hi) if route not in param.skip_hi else '\u2014'
+        if base_val is not None:
+            _base_num = _fmt_pct_val(float(base_val)).rstrip('%')
+            return f'({lo_str}, $\\mathbf{{{_base_num}}}$%, {hi_str})'
+        return f'({lo_str}, $\\mathbf{{baseline}}$, {hi_str})'
+
+    if param.field == 'DC_Q_MAX_M3S':
+        # Stored in m³/s; display as % liquid holdup (§4a).
+        # Uses param.lo/hi from the SA registry (not records) to avoid misleading
+        # '—' entries from effective_direction relabelling.  Framework §11.
+        _BASELINE_HOLDUP_PCT = 0.20  # §4a: baseline 0.2% liquid holdup
+        base_qmax = float(base_val) if base_val is not None else None
+        if base_qmax and base_qmax > 0:
+            lo_str = (_fmt_holdup_pct(param.lo / base_qmax * _BASELINE_HOLDUP_PCT)
+                      if route not in param.skip_lo else '\u2014')
+            hi_str = (_fmt_holdup_pct(param.hi / base_qmax * _BASELINE_HOLDUP_PCT)
+                      if route not in param.skip_hi else '\u2014')
+            # % must sit outside $\mathbf{}$ to avoid mathtext ParseFatalException.
+            _base_num = f'{_BASELINE_HOLDUP_PCT:.2f}'
+            return f'({lo_str}, $\\mathbf{{{_base_num}}}$%, {hi_str})'
+        lo_str = _fmt_param_val(param.lo) if route not in param.skip_lo else '\u2014'
+        hi_str = _fmt_param_val(param.hi) if route not in param.skip_hi else '\u2014'
+        base_str = _fmt_param_val(float(base_val)) if base_val is not None else 'baseline'
+        return f'({lo_str}, $\\mathbf{{{base_str}}}$, {hi_str})'
+
+    # Default: electricity_price, RESTART_FREQUENCY_PER_LINE.
+    lo_str = _fmt_param_val(param.lo) if route not in param.skip_lo else '\u2014'
+    hi_str = _fmt_param_val(param.hi) if route not in param.skip_hi else '\u2014'
+    base_str = _fmt_param_val(float(base_val)) if base_val is not None else 'baseline'
+    return f'({lo_str}, $\\mathbf{{{base_str}}}$, {hi_str})'
+
+
+# ---------------------------------------------------------------------------
 # Tornado plots
 # ---------------------------------------------------------------------------
 
 def _plot_tornado(records: list[dict], route: str, base_msp: float) -> pathlib.Path:
     """Write outputs/sensitivity_tornado_{route}.png.
 
-    Y-axis: parameter labels sorted by |swing_hi − swing_lo| ascending so the
-    largest-impact parameter appears at the top of the chart (barh plots bottom→top).
-    X-axis: MSP swing ($/kg SCP), zero-centered.  Framework §11 / plan spec.
+    Layout matches Combined_tornado.png reference style (DAC project):
+      - X-axis: % change in MSP from baseline on a symmetric-log scale
+      - Y-axis: parameter name (top line) + (lo, bold-BL, hi) range annotation
+                (bottom line, smaller gray text)
+      - Bar tips labeled with ±% values
+      - Alternating light-gray row bands
+      - Dashed vertical reference line at Δ MSP = 0
+      - Legend at bottom: low (dark solid) / high (light hatched)
+      - No top or right spines
+    Framework §11 / plan spec.
     """
     _OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
     out_path = _OUTPUTS_DIR / f'sensitivity_tornado_{route}.png'
@@ -511,10 +652,10 @@ def _plot_tornado(records: list[dict], route: str, base_msp: float) -> pathlib.P
     route_records = [r for r in records if r['Route'] == route]
     df = pd.DataFrame(route_records)
 
-    # Collect (swing_lo, swing_hi) per parameter label
+    # Collect (swing_lo_pct, swing_hi_pct) per parameter label.
+    # Omit parameters that don't apply to this route at all.
     data: dict[str, tuple[float, float]] = {}
     for param in _SA_PARAMS:
-        # Omit parameters that don't apply to this route at all
         if route in param.skip_lo and route in param.skip_hi:
             continue
         sub = df[df['Parameter'] == param.field]
@@ -522,54 +663,133 @@ def _plot_tornado(records: list[dict], route: str, base_msp: float) -> pathlib.P
         hi_row = sub[sub['Direction'] == 'high']
         lo_swing = float(lo_row['MSP swing ($/kg)'].values[0]) if len(lo_row) else 0.0
         hi_swing = float(hi_row['MSP swing ($/kg)'].values[0]) if len(hi_row) else 0.0
-        data[param.label] = (lo_swing, hi_swing)
+        # Convert absolute $/kg swings → % of base MSP (Framework §11 reference style)
+        lo_pct = lo_swing / base_msp * 100.0 if base_msp != 0.0 else 0.0
+        hi_pct = hi_swing / base_msp * 100.0 if base_msp != 0.0 else 0.0
+        data[param.label] = (lo_pct, hi_pct)
 
-    # Sort ascending by |swing_hi − swing_lo| → largest impact ends at top (highest y)
+    # Sort ascending by |swing_hi − swing_lo| → largest impact at top (barh: bottom→top)
     sorted_labels = sorted(data.keys(), key=lambda lbl: abs(data[lbl][1] - data[lbl][0]))
 
     n_params = len(sorted_labels)
 
     plt.rcParams.update({
         'font.family':      'sans-serif',
-        'font.size':        14,
-        'axes.titlesize':   15,
-        'axes.labelsize':   14,
-        'xtick.labelsize':  12,
-        'ytick.labelsize':  13,
+        'font.size':        12,
+        'axes.labelsize':   13,
+        'xtick.labelsize':  11,
         'figure.facecolor': 'white',
         'axes.facecolor':   'white',
         'hatch.linewidth':  1.5,
+        # dejavusans keeps $\mathbf{}$ glyphs visually consistent with surrounding
+        # sans-serif tick / annotation text — Framework §11 range-label convention
+        'mathtext.fontset': 'dejavusans',
     })
 
-    fig, ax = plt.subplots(figsize=(12, max(8, n_params * 0.6)))
+    fig, ax = plt.subplots(figsize=(12, max(8, n_params * 0.95)))
 
     y = list(range(n_params))
-    swing_lo = [data[lbl][0] for lbl in sorted_labels]
-    swing_hi = [data[lbl][1] for lbl in sorted_labels]
+    swing_lo_pct = [data[lbl][0] for lbl in sorted_labels]
+    swing_hi_pct = [data[lbl][1] for lbl in sorted_labels]
+
+    # --- Alternating row backgrounds (even-indexed rows, counting from bottom) ---
+    for i in range(n_params):
+        if i % 2 == 0:
+            ax.axhspan(i - 0.5, i + 0.5, color='#f0f0f0', zorder=0)
 
     # Route colour with dark/light shades — Framework §11.
-    # Fixed HLS lightness targets keep H and S constant so both shades read as
-    # the same colour family.  L = 0.22 (dark) and L = base + 0.32 (light, capped
-    # at 0.84) guarantee a wide perceptual gap regardless of the base colour's L.
+    # Fixed HLS lightness targets: L×0.5 (dark) and L+0.32 (light, ≤0.84).
     r, g, b = mcolors.to_rgb(_ROUTE_COLORS.get(route, '#888888'))
     h, l, s = colorsys.rgb_to_hls(r, g, b)
-    dark_color  = colorsys.hls_to_rgb(h, max(l * 0.5, 0.15), s)
+    dark_color  = colorsys.hls_to_rgb(h, max(l * 0.5,  0.15), s)
     light_color = colorsys.hls_to_rgb(h, min(l + 0.32, 0.84), s)
-    ax.barh(y, swing_lo, color=dark_color,  label='Low perturbation',
-            hatch='', edgecolor='black', linewidth=0.4)
-    ax.barh(y, swing_hi, color=light_color, label='High perturbation',
-            hatch='//', edgecolor='black', linewidth=0.4)
 
+    bar_h = 0.55
+    ax.barh(y, swing_lo_pct, height=bar_h, color=dark_color,
+            hatch='',   edgecolor='black', linewidth=0.4, zorder=2)
+    ax.barh(y, swing_hi_pct, height=bar_h, color=light_color,
+            hatch='//', edgecolor='black', linewidth=0.4, zorder=2)
+
+    # --- Bar-tip % labels ---
+    for i, (lo_pct, hi_pct) in enumerate(zip(swing_lo_pct, swing_hi_pct)):
+        if abs(lo_pct) > 0.01:
+            x_sign = -1 if lo_pct < 0 else 1
+            ax.annotate(
+                f'{lo_pct:+.1f}%',
+                xy=(lo_pct, i), xytext=(x_sign * 3, 0),
+                textcoords='offset points',
+                ha='right' if lo_pct <= 0 else 'left', va='center',
+                fontsize=8.5, zorder=5,
+            )
+        if abs(hi_pct) > 0.01:
+            x_sign = 1 if hi_pct > 0 else -1
+            ax.annotate(
+                f'{hi_pct:+.1f}%',
+                xy=(hi_pct, i), xytext=(x_sign * 3, 0),
+                textcoords='offset points',
+                ha='left' if hi_pct >= 0 else 'right', va='center',
+                fontsize=8.5, zorder=5,
+            )
+
+    # --- Dashed zero reference line ---
+    ax.axvline(0, color='#444444', lw=1.0, linestyle='--', zorder=4)
+
+    # --- Linear x-axis ---
+    ax.xaxis.set_major_formatter(plt.FuncFormatter(
+        lambda x, _: '0' if x == 0 else f'{x:+.0f}%'
+    ))
+    ax.set_xlabel('% Change in MSP ($/kg SCP) from baseline', fontsize=13)
+
+    # Expand x-limits ~35% beyond each side's own extreme — asymmetric so neither
+    # side is forced to mirror the other.
+    all_pct = [v for v in swing_lo_pct + swing_hi_pct if abs(v) > 0.01]
+    if all_pct:
+        min_val = min(all_pct)
+        max_val = max(all_pct)
+        x_lo = min_val * 1.35 if min_val < 0 else -1.0
+        x_hi = max_val * 1.35 if max_val > 0 else  1.0
+        ax.set_xlim(x_lo, x_hi)
+
+    # --- Y-axis: two-line custom labels ---
+    # Line 1 (above bar centre): parameter name, fontsize=11
+    # Line 2 (below bar centre): (lo, bold-BL, hi) range annotation, fontsize=9
+    # Placed to the left of the axes using a blended axes×data transform.
     ax.set_yticks(y)
-    ax.set_yticklabels(sorted_labels, fontsize=13)
-    ax.axvline(0, color='k', lw=0.8)
-    ax.set_xlabel('MSP swing ($/kg SCP)', fontsize=14)
-    ax.legend(loc='upper right', fontsize=11)
-    ax.grid(axis='x', linestyle='--', alpha=0.5)
+    ax.set_yticklabels([])
+    ax.tick_params(axis='y', length=0)
 
-    fig.savefig(out_path, dpi=150, bbox_inches='tight')
+    trans = blended_transform_factory(ax.transAxes, ax.transData)
+    x_label = -0.02   # axes-coord x: just left of the left spine
+    for i, lbl in enumerate(sorted_labels):
+        param = next((p for p in _SA_PARAMS if p.label == lbl), None)
+        range_str = _make_range_label(param, df, route) if param else ''
+        # Parameter name — slightly above bar centre
+        ax.text(x_label, i + 0.10, lbl,
+                transform=trans, ha='right', va='bottom', fontsize=11)
+        # Range annotation — slightly below bar centre, smaller and gray
+        ax.text(x_label, i - 0.10, range_str,
+                transform=trans, ha='right', va='top', fontsize=9, color='#555555')
+
+    # --- Spines and grid ---
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.xaxis.grid(True, color='#dddddd', linestyle='--', linewidth=0.5, alpha=0.8, zorder=1)
+    ax.set_axisbelow(True)
+    ax.set_ylim(-0.5, n_params - 0.5)
+
+    # --- Legend: direction convention patches ---
+    legend_handles = [
+        mpatches.Patch(facecolor=dark_color,  edgecolor='black', linewidth=0.6,
+                       label='Low perturbation'),
+        mpatches.Patch(facecolor=light_color, edgecolor='black', linewidth=0.6,
+                       hatch='//', label='High perturbation'),
+    ]
+    ax.legend(handles=legend_handles, fontsize=10,
+              loc='lower right',
+              frameon=True, framealpha=0.95, edgecolor='#cccccc')
+
+    fig.savefig(out_path, dpi=200, bbox_inches='tight', facecolor='white')
     plt.close(fig)
-
     return out_path
 
 

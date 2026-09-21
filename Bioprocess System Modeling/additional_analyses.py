@@ -33,6 +33,7 @@ matplotlib.use('Agg')   # non-GUI backend
 import matplotlib.colors as mcolors
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
+from matplotlib.transforms import blended_transform_factory
 import biosteam as bst
 import numpy as np
 import pandas as pd
@@ -45,6 +46,7 @@ from common.operating_hours import effective_operating_hours
 from sensitivity_analysis import (
     _patch_attrs, _BUILDERS, _ALL_ROUTES, _run_single,
     _COST_CATEGORIES_ORDER, _identify_stream_category, _ROUTE_COLORS,
+    _SA_PARAMS, _fmt_param_val, _fmt_pct_val, _fmt_holdup_pct, _FRACTION_AS_PCT_FIELDS,
 )
 
 _OUTPUTS_DIR  = pathlib.Path(__file__).parent / 'outputs'
@@ -407,12 +409,15 @@ def plot_cross_route_tornado(
     """Single figure comparing all four routes' signed MSP swings per parameter.
 
     Reads the existing sensitivity_results.xlsx — no new simulations.
-    Matches the LCA tornado style (lca_tornado.py):
-      - Symmetric-log x-axis centred on 0 (Δ MSP = 0)
-      - Dark shade + solid fill  = low perturbation  (left)
-      - Light shade + '//' hatch = high perturbation (right)
-      - Parameters sorted ascending by max |swing|; most impactful at top.
-      - Legend includes base-case MSP per route + shade/direction patches.
+    Layout matches Combined_tornado.png reference style (DAC project):
+      - X-axis: % change in MSP from baseline on a symmetric-log scale
+      - Y-axis: parameter name (top line) + (lo, bold-BL, hi) range annotation
+                (bottom line) — base shown as 'varies' for route-specific params
+      - Bar tips labeled with ±% values
+      - Alternating light-gray row bands
+      - Dashed vertical reference line at Δ MSP = 0
+      - Legend at bottom: route patches + direction convention patches
+      - No top or right spines
     Framework §11.
 
     Parameters
@@ -431,8 +436,9 @@ def plot_cross_route_tornado(
 
     _OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
 
-    ts = pd.read_excel(excel_path, sheet_name='Tornado Summary')
-    bc = pd.read_excel(excel_path, sheet_name='Base Case Design')
+    ts  = pd.read_excel(excel_path, sheet_name='Tornado Summary')
+    bc  = pd.read_excel(excel_path, sheet_name='Base Case Design')
+    oat = pd.read_excel(excel_path, sheet_name='OAT Results')
 
     # Signed swing columns written by _export_sa_excel: '{route}_lo' and '{route}_hi'
     lo_cols = [c for c in ts.columns if c.endswith('_lo')]
@@ -461,6 +467,79 @@ def plot_cross_route_tornado(
     n_params = len(labels)
     n_routes = len(routes_in_sheet)
 
+    # Build label → _SAParam lookup for range annotations
+    param_by_label = {p.label: p for p in _SA_PARAMS}
+
+    def _range_label(label: str) -> str:
+        """Return '(lo, BL_bold, hi)' annotation for the cross-route y-axis.
+
+        Relative params: unified ±% offset notation (nutrients now consistent
+        with feedstock/CAPEX).
+        Fraction-as-pct params: displayed ×100 with % suffix; base shown as
+        actual value if consistent across routes, 'varies' otherwise.
+        DC_Q_MAX_M3S: m³/s → % liquid holdup via §4a formula.
+        Default absolute params: numeric as-is with shared base from OAT.
+        Framework §11 / _make_range_label convention.
+        """
+        param = param_by_label.get(label)
+        if param is None:
+            return ''
+
+        if param.is_relative:
+            # All relative params unified to ±% offset notation.
+            lo_pct = (param.lo - 1.0) * 100.0
+            hi_pct = (param.hi - 1.0) * 100.0
+            lo_str = f'{lo_pct:.0f}%'
+            hi_str = f'+{hi_pct:.0f}%'
+            return f'({lo_str}, $\\mathbf{{baseline}}$, {hi_str})'
+
+        if param.field in _FRACTION_AS_PCT_FIELDS:
+            lo_str = _fmt_pct_val(param.lo)
+            hi_str = _fmt_pct_val(param.hi)
+            if param.category in ('economics', 'global'):
+                sub_base = oat[oat['Parameter'] == param.field]['Base param value'].dropna()
+                if len(sub_base):
+                    _base_num = _fmt_pct_val(float(sub_base.iloc[0])).rstrip('%')
+                    return f'({lo_str}, $\\mathbf{{{_base_num}}}$%, {hi_str})'
+            else:
+                # Route-specific — show actual base if consistent across all routes
+                sub_base = oat[oat['Parameter'] == param.field]['Base param value'].dropna()
+                unique_vals = sub_base.unique()
+                if len(unique_vals) == 1:
+                    _base_num = _fmt_pct_val(float(unique_vals[0])).rstrip('%')
+                    return f'({lo_str}, $\\mathbf{{{_base_num}}}$%, {hi_str})'
+            # Multiple distinct bases (e.g. epsilon: 0.90 vs 0.99 for gas ferm)
+            return f'({lo_str}, $\\mathbf{{varies}}$, {hi_str})'
+
+        if param.field == 'DC_Q_MAX_M3S':
+            # Stored in m³/s; display as % liquid holdup (§4a).
+            _BASELINE_HOLDUP_PCT = 0.20  # §4a: baseline 0.2% liquid holdup
+            sub_base = oat[oat['Parameter'] == param.field]['Base param value'].dropna()
+            base_qmax = float(sub_base.iloc[0]) if len(sub_base) else None
+            if base_qmax and base_qmax > 0:
+                lo_str = _fmt_holdup_pct(param.lo / base_qmax * _BASELINE_HOLDUP_PCT)
+                hi_str = _fmt_holdup_pct(param.hi / base_qmax * _BASELINE_HOLDUP_PCT)
+                # % must sit outside $\mathbf{}$ to avoid mathtext ParseFatalException.
+                _base_num = f'{_BASELINE_HOLDUP_PCT:.2f}'
+                return f'({lo_str}, $\\mathbf{{{_base_num}}}$%, {hi_str})'
+            lo_str = _fmt_param_val(param.lo)
+            hi_str = _fmt_param_val(param.hi)
+            base_str = '?'
+            return f'({lo_str}, $\\mathbf{{{base_str}}}$, {hi_str})'
+
+        if param.category in ('economics', 'global'):
+            lo_str = _fmt_param_val(param.lo)
+            hi_str = _fmt_param_val(param.hi)
+            sub_base = oat[oat['Parameter'] == param.field]['Base param value'].dropna()
+            base_str = _fmt_param_val(float(sub_base.iloc[0])) if len(sub_base) else '?'
+        else:
+            # Route-specific param — base differs per route
+            lo_str   = _fmt_param_val(param.lo)
+            hi_str   = _fmt_param_val(param.hi)
+            base_str = 'varies'
+
+        return f'({lo_str}, $\\mathbf{{{base_str}}}$, {hi_str})'
+
     # Layout — matching lca_tornado spacing
     bar_h   = 0.22   # center-to-center spacing between adjacent bars in a cluster
     bar_w   = 0.17   # actual bar width (narrower than spacing → small gap between bars)
@@ -478,51 +557,86 @@ def plot_cross_route_tornado(
         'figure.facecolor': 'white',
         'axes.facecolor':   'white',
         'hatch.linewidth':  1.5,
+        # dejavusans keeps $\mathbf{}$ glyphs consistent with surrounding sans-serif text
+        'mathtext.fontset': 'dejavusans',
     })
 
     fig, ax = plt.subplots(figsize=(12, max(6, n_params * y_sp * 0.65)))
+
+    # Alternating row backgrounds — even-indexed parameters (counting from bottom)
+    for i in range(n_params):
+        if i % 2 == 0:
+            ax.axhspan(y_base[i] - y_sp / 2.0, y_base[i] + y_sp / 2.0,
+                       color='#f0f0f0', zorder=0)
 
     for i, route in enumerate(routes_in_sheet):
         lo_col = f'{route}_lo_pct'
         hi_col = f'{route}_hi_pct'
         dark_color  = _ROUTE_SHADE_DARK.get(route,  (0.5, 0.5, 0.5))
         light_color = _ROUTE_SHADE_LIGHT.get(route, (0.8, 0.8, 0.8))
-        for yb, lo_val, hi_val in zip(y_base, ts[lo_col].tolist(), ts[hi_col].tolist()):
+        for k, (yb, lo_val, hi_val) in enumerate(
+                zip(y_base, ts[lo_col].tolist(), ts[hi_col].tolist())):
             yp = yb + offsets[i]
-            # High perturbation — light shade + '//' hatch; matching individual tornado style
+            # High perturbation — light shade + '//' hatch
             if abs(hi_val) > 1e-6:
                 ax.barh(yp, hi_val, bar_w,
                         left=0, color=light_color, hatch='//',
                         edgecolor='black', linewidth=0.5, zorder=3)
-            # Low perturbation — dark shade + solid fill; matching individual tornado style
+            # Low perturbation — dark shade + solid fill
             if abs(lo_val) > 1e-6:
                 ax.barh(yp, lo_val, bar_w,
                         left=0, color=dark_color, hatch='',
                         edgecolor='black', linewidth=0.5, zorder=3)
 
     # Baseline reference line at Δ MSP = 0
-    ax.axvline(0, color='#333333', linewidth=1.5, linestyle='--', alpha=0.8, zorder=4)
+    ax.axvline(0, color='#444444', linewidth=1.0, linestyle='--', alpha=0.8, zorder=4)
 
+    # Linear x-axis
     ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(
-        lambda x, _: f'{x:+.0f}%' if x != 0 else '0'
+        lambda x, _: '0' if x == 0 else f'{x:+.0f}%'
     ))
-    ax.set_yticks(y_base)
-    ax.set_yticklabels(labels)
-    ax.set_xlabel('Δ MSP (% of base case)', fontsize=13)
+    ax.tick_params(axis='x', labelsize=12)
 
-    ax.xaxis.grid(True, color='#CCCCCC', linestyle='--', linewidth=0.5, alpha=0.7, zorder=0)
+    # X-limits: asymmetric — each side expands 35% beyond its own extreme.
+    all_pct = pd.concat([ts[c] for c in lo_pct_cols + hi_pct_cols])
+    if not all_pct.empty and all_pct.abs().max() > 0:
+        min_val = all_pct.min()
+        max_val = all_pct.max()
+        x_lo = min_val * 1.35 if min_val < 0 else -1.0
+        x_hi = max_val * 1.35 if max_val > 0 else  1.0
+        ax.set_xlim(x_lo, x_hi)
+
+    ax.set_xlabel('% Change in MSP ($/kg SCP) from baseline', fontsize=13)
+
+    # Y-axis: two-line custom labels (parameter name + range annotation)
+    ax.set_yticks(y_base)
+    ax.set_yticklabels([])
+    ax.tick_params(axis='y', length=0)
+
+    trans   = blended_transform_factory(ax.transAxes, ax.transData)
+    x_label = -0.02
+    for i, lbl in enumerate(labels):
+        range_str = _range_label(lbl)
+        # Parameter name — slightly above cluster centre
+        ax.text(x_label, y_base[i] + 0.10, lbl,
+                transform=trans, ha='right', va='bottom', fontsize=11)
+        # Range annotation — slightly below cluster centre, smaller and gray
+        ax.text(x_label, y_base[i] - 0.10, range_str,
+                transform=trans, ha='right', va='top', fontsize=9, color='#555555')
+
+    ax.xaxis.grid(True, color='#dddddd', linestyle='--', linewidth=0.5, alpha=0.8, zorder=1)
     ax.set_axisbelow(True)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
+    ax.set_ylim(y_base[0] - y_sp / 2.0, y_base[-1] + y_sp / 2.0)
 
     # Legend — route patches (base colour + base MSP) + hatch/direction convention patches
-    # Reverse order so legend top→bottom matches bar stacking top→bottom (gas ferm on top).
     legend_handles = []
     for route in reversed(routes_in_sheet):
         bc_row = bc[bc['Route'] == route]
         if not bc_row.empty and 'Base MSP ($/kg)' in bc_row.columns:
             base_msp = float(bc_row['Base MSP ($/kg)'].iloc[0])
-            lbl = f"{_ROUTE_DISPLAY.get(route, route)}  (base ${base_msp:.2f}/kg SCP)"
+            lbl = f"{_ROUTE_DISPLAY.get(route, route)}  (baseline ${base_msp:.2f}/kg SCP)"
         else:
             lbl = _ROUTE_DISPLAY.get(route, route)
         legend_handles.append(
@@ -532,7 +646,6 @@ def plot_cross_route_tornado(
                 label=lbl,
             )
         )
-    # Hatch/direction convention — light shade + hatch for high, dark shade for low
     legend_handles.append(
         mpatches.Patch(facecolor='#bbbbbb', hatch='//',
                        edgecolor='#444444', linewidth=0.8,
@@ -543,10 +656,9 @@ def plot_cross_route_tornado(
                        edgecolor='#444444', linewidth=0.8,
                        label='Lower perturbation')
     )
-    ax.legend(handles=legend_handles, fontsize=14, loc='lower right',
+    ax.legend(handles=legend_handles, fontsize=11, loc='lower right',
               frameon=True, framealpha=0.95, edgecolor='#cccccc')
 
-    plt.tight_layout()
     png_path = _OUTPUTS_DIR / 'cross_route_tornado.png'
     fig.savefig(png_path, dpi=200, bbox_inches='tight', facecolor='white')
     plt.close(fig)
