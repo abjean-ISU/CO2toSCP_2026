@@ -1,4 +1,4 @@
-cff-version: 1.0.0
+cff-version: 1.0.1
 message: "If you use this data, please cite it as below."
 type: dataset
 authors:
@@ -11,6 +11,6 @@ authors:
 title: "Dataset and Code Files for Paper: CO2 upgrading to single cell protein: a comparative assessment of emerging pathways "
 DOI: 10.5281/zenodo.22815086
 version: 1.0.0
-date-released: 2026-09-14
+date-released: 2026-11-16
 url: "https://github.com/abjean-ISU/BulkGastoAtomizedLiquidForDAC_2026"
 abstract: "This repository contains the raw data and analysis scripts used to produce the results in the paper 'CO2 upgrading to single cell protein: a comparative assessment of emerging pathways ' (Green Chemistry, 2026)."
