@@ -44,7 +44,7 @@ Key differences from liquid-substrate routes (Framework §4a)
    contraction mapping (gain = 0.75 < 1).  recycle_water is wired from RCY101.outs[0]
    back to M101 (identical pattern to fructose/acetate/formate routes).
 3. Substrate (H2) is a dissolved gas, not a liquid feedstock.  Henry's law at 4 atm
-   fixes the achievable dissolved H2 concentration: S_f_H2 = 0.0051 g/L.  X* is
+   fixes the achievable dissolved H2 concentration: S_f_H2 = 0.005 g/L.  X* is
    solved forward from S_f (not backward from a target titer).
 4. Pre-saturation requires two separate droplet columns (DC101 for H2; DC102 for
    CO2+O2) to prevent H2/O2 contact in the gas phase (explosion hazard, Framework §4a).
@@ -147,8 +147,10 @@ from perfusion_bioreactor.unitwithauxiliary import PerfusionBioreactor
 # Module-level constants — Framework §4a
 # ---------------------------------------------------------------------------
 
-_S_F_H2        = 0.0051  # g/L  — dissolved H2 at 4 atm (Henry's law, Framework §4a)
-_S_F_O2        = 0.11    # g/L  — dissolved O2 at 4 atm (DC102 design target, Framework §4a)
+_S_F_H2        = 0.005   # g/L  — dissolved H2 at 4 atm (Henry's law, Framework §4a;
+                          #        updated 2026-11-16 from Matlab droplet column model)
+_S_F_O2        = 0.12    # g/L  — dissolved O2 at 4 atm (DC102 design target, Framework §4a;
+                          #        updated 2026-11-16 from Matlab droplet column model)
 _P_PRE_SAT_ATM = 4.0     # atm  — droplet column operating pressure (Framework §4a)
 _P_GAS_FEED_ATM = 4.5   # atm  — gas feed delivery pressure; 0.5 atm above column
                           #        operating pressure to drive gas into pressurised liquid
@@ -264,6 +266,7 @@ def build_gas_fermentation_system(
     # 5b. Dissolved CO2 design concentration (compute, don't assert)
     #     Stoichiometric ratio: S_f_CO2/S_f_O2 = (n_CO2 * MW_CO2) / (n_O2 * MW_O2)
     #     Ensures CO2 and O2 dissolve in proportion to bacterial demand.
+    #     With _S_F_O2 = 0.12 g/L: S_f_CO2 ≈ 0.906 × 0.12 ≈ 0.1087 g/L
     # ------------------------------------------------------------------
     S_f_CO2 = (GAS_FERM_N_CO2 * MW_CO2) / (GAS_FERM_N_O2 * MW_O2) * _S_F_O2   # g/L
 
@@ -557,7 +560,7 @@ def build_gas_fermentation_system(
     # ------------------------------------------------------------------
     # 11. PerfusionBioreactor R101 — autotrophic C. necator cultivation
     #     Perfusion retains cells via internal centrifuge (eta=0.97), achieving
-    #     ~25x higher CDW than a simple CSTR at the same S_f = 0.0051 g/L.
+    #     ~25x higher CDW than a simple CSTR at the same S_f = 0.005 g/L.
     #     This reduces vessel count (capital savings) but does not reduce the
     #     total liquid throughput Q — water cost dominates, illustrating the
     #     inherent mass-transfer limitation of gas-phase H2 fermentation.
@@ -629,7 +632,7 @@ def build_gas_fermentation_system(
     #     on fructose for seed culture, then transitions to autotrophic H2-oxidation
     #     at production scale.  H2 is physically unsuitable for seed culture:
     #       (a) dissolved H2 at ambient pressure ≪ 0.001 g/L — too dilute to support
-    #           meaningful growth (S_f = 0.0051 g/L requires 4 atm pressurization);
+    #           meaningful growth (S_f = 0.005 g/L requires 4 atm pressurization);
     #       (b) SeedBioreactor (AeratedBioreactor) is not a pressure vessel.
     #     User-confirmed 2026-08-07; fructose params imported from _ROUTE_PARAMS.
     # ------------------------------------------------------------------
