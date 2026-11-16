@@ -121,7 +121,7 @@ new biogas stream — it is not a pre-existing stream that could be cheaply pric
   routes.
 - Gas fermentation: continuous **with cell recycle (perfusion)** — the only route using it. Feed
   gas is fully pre-saturated upstream (droplet contactors at 4 atm — full unit design in Section 4a),
-  fixing the feed dissolved-H2 concentration S_f at 0.0051 g/L *before*
+  fixing the feed dissolved-H2 concentration S_f at 0.005 g/L *before*
   the bioreactor ever sees it. **Correction (superseding the original April framing):** because
   dissolution is fully resolved upstream, the bioreactor itself has no in-situ gas-to-liquid mass
   transfer problem — no kLa/OTR physics happens inside this vessel; that engineering lives entirely
@@ -231,15 +231,15 @@ in the liquid-phase outlet. Gas feed flow rate (kg/h) = dissolved gas flow rate 
 
 **H2 contactor set (DC101):**
 - Gas feed: H2 at 4 atm partial pressure; price = $4.83/kg (Section 9.4)
-- Dissolved H2 in liquid outlet: **S_f(H2) = 0.0051 g/L**
-- H2 feed rate (kg/h) = 0.0051 [g/L] × Q_H2_side [m³/s] × 3600 [s/h] × (1 m³ = 1000 L) / 1000 [g/kg]
-  = 0.0051 × Q_H2_side × 3.6 kg/h [with Q in m³/s]
+- Dissolved H2 in liquid outlet: **S_f(H2) = 0.005 g/L**
+- H2 feed rate (kg/h) = 0.005 [g/L] × Q_H2_side [m³/s] × 3600 [s/h] × (1 m³ = 1000 L) / 1000 [g/kg]
+  = 0.005 × Q_H2_side × 3.6 kg/h [with Q in m³/s]
 
 **CO2/O2 contactor set (DC102):**
 - Gas feed: CO2 at 0.1 atm partial pressure + O2 at 3.9 atm partial pressure = 4 atm total
-- Dissolved O2 in liquid outlet: **S_f(O2) = 0.11 g/L** (DC102 design target); price = $0/kg (Section 9.4)
-- Dissolved CO2 in liquid outlet: **S_f(CO2) ≈ 0.0996 g/L** (computed from stoich ratio × S_f(O2); see §9.5a); price = $0/kg (Section 9.4)
-- CO2 feed rate = 0.0996 × Q_CO2O2_side × 3.6 kg/h; O2 feed rate = 0.11 × Q_CO2O2_side × 3.6 kg/h
+- Dissolved O2 in liquid outlet: **S_f(O2) = 0.12 g/L** (DC102 design target); price = $0/kg (Section 9.4)
+- Dissolved CO2 in liquid outlet: **S_f(CO2) ≈ 0.1087 g/L** (computed from stoich ratio × S_f(O2); see §9.5a); price = $0/kg (Section 9.4)
+- CO2 feed rate = 0.1087 × Q_CO2O2_side × 3.6 kg/h; O2 feed rate = 0.12 × Q_CO2O2_side × 3.6 kg/h
 
 **Flow split — always computed, never hardcoded:**
 
@@ -249,7 +249,7 @@ coefficients. Let f = fraction of Q routed to the H2 contactor set:
 
 ```
 f = (S_f(O2) × g_H2_per_gCDW) / (S_f(H2) × g_O2_per_gCDW + S_f(O2) × g_H2_per_gCDW)
-  = (0.11 × 0.4430) / (0.0051 × 2.044 + 0.11 × 0.4430)  ≈ 0.824
+  = (0.12 × 0.4430) / (0.005 × 2.044 + 0.12 × 0.4430)  ≈ 0.839
 
 Q_H2_side    = f × Q      (m³/s)
 Q_CO2O2_side = (1 − f) × Q
@@ -263,12 +263,12 @@ equation (Section 9.5a).
 
 **Q sizing correction — DC split dilutes H2 at the reactor inlet:**
 
-`design_gas_fermentation_reactor` (Section 5) sizes Q using S_f(H2) = 0.0051 g/L as if the full
+`design_gas_fermentation_reactor` (Section 5) sizes Q using S_f(H2) = 0.005 g/L as if the full
 liquid flow enters the bioreactor at that H2 concentration. In practice, after MX101 recombines the
 two contactor streams:
 
 ```
-[H2]_reactor_inlet = f × S_f(H2) = 0.824 × 0.0051 ≈ 0.00420 g/L
+[H2]_reactor_inlet = f × S_f(H2) = 0.839 × 0.005 ≈ 0.00420 g/L
 ```
 
 The (1−f) fraction carries O2/CO2 only — no H2. This dilution means the reactor delivers less H2
@@ -277,7 +277,7 @@ applies a correction factor before all volumetric sizing:
 
 ```
 Q_design  = Q_CSTR                    (CSTR basis — proportional to production target)
-Q         = Q_design / f              (corrected total process liquid; ≈ 1.214 × Q_CSTR for f = 0.824)
+Q         = Q_design / f              (corrected total process liquid; ≈ 1.192 × Q_CSTR for f = 0.839)
 ```
 
 This restores the H2 delivery rate and ensures each perfusion vessel receives sufficient liquid to
@@ -287,7 +287,7 @@ quantities (nutrients and NH3 feed rates, which scale with CDW output, not total
 
 **CO2:O2 stoichiometric ratio — satisfied by construction:** S_f(CO2) is computed as
 `stoich_ratio × S_f(O2)` where stoich_ratio = g_CO2_per_gCDW / g_O2_per_gCDW = 1.851 / 2.044 =
-**0.906** (§9.5a). The DC102 dissolved CO2:O2 mass ratio is therefore 0.0996 / 0.11 = 0.906 —
+**0.906** (§9.5a). The DC102 dissolved CO2:O2 mass ratio is therefore 0.1087 / 0.12 = 0.906 —
 identically equal to the stoichiometric requirement, by construction. CO2 and O2 are delivered in
 exact stoichiometric proportion; neither is in excess. O2 is the binding constraint for the flow
 split (DC101 supplies H2; DC102 supplies the O2 that limits f). If a future revision changes S_f(O2)
@@ -835,7 +835,7 @@ silently.
 | WWT stream combiner — WWT101 | All 4 (WWT101) | bst.Mixer (inline blending, zero capital) | WWT101 combines centrifuge centrate and seed train effluents before WWT102. Note: D101 (SprayDryer) `outs[0]` is evaporated water vapor discharged directly to atmosphere — it is not a WWT feed. WWT101 is a pure stream combiner with no reaction, dissolution, or equalization kinetics — zero capital, consistent with WWT102 (`_SludgeSettler`, zero capital) and RCY101 (`bst.Splitter`, zero capital). Gas fermentation Q ≈ 370,000 m³/h made a MixTank infeasible (BioSTEAM V_max=30 m³ → ~2,500 parallel tanks, $454 M). User-confirmed 2026-08-07. | n/a | — |
 | Feedstock / product storage tank residence time (STORAGE_TANK_TAU) | All 4 (shared) | 168 h (7 days) | Engineering judgment: one week of buffer inventory is a standard design assumption for continuous bioprocesses with reliable logistics (Towler & Sinnott, *Chemical Engineering Design*, 2nd ed.). Applied to fructose, nutrients, ammonia, and dried SCP product storage tanks (ST101–ST104). | n/a | — |
 | Seed batch duration (SEED_BATCH_DURATION_H) | All 4 (seed train) | 72 h (3 stages × 24 h/stage) | Engineering judgment: each stage grows from 5 % inoculum (INOCULUM_RATIO) to working density. For fructose mu_max = 0.22 h⁻¹, growth time ≈ ln(20)/(0.8 × 0.22) = 17 h; 24 h/stage includes a ~7 h margin for lag phase (Doran, *Bioprocess Engineering Principles*, 2nd ed., §14.4). Governs N_seed_trains = ceil(N_total × RESTARTS_PER_YEAR × SEED_BATCH_DURATION_H / op_hours): ≈ 9 for gas fermentation (N_total ≈ 493), 1 for liquid routes (N_total ≈ 6–39). User-confirmed 2026-08-07. | n/a | — |
-| Gas fermentation seed substrate | Gas fermentation seed train only | Fructose (heterotrophic) | C. necator is grown on fructose for seed culture before transitioning to autotrophic H2-oxidation at production scale. H2 is physically unsuitable for seed culture: (a) dissolved H2 at ambient pressure ≪ 0.001 g/L (pressurization to 4 atm required for S_f = 0.0051 g/L); (b) SeedBioreactor is not a pressure vessel. Fructose seed parameters sourced from fructose RouteParams (S0 from §5 step 3, nh3_wt from Roels stoichiometry). User-confirmed 2026-08-07. | n/a | — |
+| Gas fermentation seed substrate | Gas fermentation seed train only | Fructose (heterotrophic) | C. necator is grown on fructose for seed culture before transitioning to autotrophic H2-oxidation at production scale. H2 is physically unsuitable for seed culture: (a) dissolved H2 at ambient pressure ≪ 0.001 g/L (pressurization to 4 atm required for S_f = 0.005 g/L); (b) SeedBioreactor is not a pressure vessel. Fructose seed parameters sourced from fructose RouteParams (S0 from §5 step 3, nh3_wt from Roels stoichiometry). User-confirmed 2026-08-07. | n/a | — |
 
 ### 9.3 Nutrients — Recipe, Coefficient, and Prices (Section 7)
 

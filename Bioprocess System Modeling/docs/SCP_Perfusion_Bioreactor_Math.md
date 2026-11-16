@@ -61,8 +61,8 @@ Both values are externally fixed by operating pressure and gas-phase composition
 
 | Gas | Symbol | Value at 4 atm | Basis |
 |-----|--------|----------------|-------|
-| H₂ dissolved | S_f_H2 | 0.0051 g/L | Henry's law, 4 atm, Framework §4a |
-| O₂ dissolved | S_f_O2 | 0.11 g/L | DC102 design target, Framework §4a |
+| H₂ dissolved | S_f_H2 | 0.005 g/L | Henry's law, 4 atm, Framework §4a |
+| O₂ dissolved | S_f_O2 | 0.12 g/L | DC102 design target, Framework §4a |
 
 S_f_H2 is the parameter that ultimately determines the achievable titer and drives the vessel count — the single most consequential number in this route.
 
@@ -72,7 +72,7 @@ CO₂ must be supplied in stoichiometric proportion to O₂ demand. The CO₂ de
 
 $$
 S_{f,\text{CO}_2} = \frac{n_{\text{CO}_2} \cdot \text{MW}_{\text{CO}_2}}{n_{\text{O}_2} \cdot \text{MW}_{\text{O}_2}} \times S_{f,\text{O}_2}
-= \frac{4.09 \times 44.01}{6.21 \times 32.00} \times 0.11 = 0.906 \times 0.11 \approx 0.0997 \text{ g/L}
+= \frac{4.09 \times 44.01}{6.21 \times 32.00} \times 0.12 = 0.906 \times 0.12 \approx 0.1087 \text{ g/L}
 $$
 
 ### 2.4 DC split fraction f
@@ -100,17 +100,17 @@ g_{\text{O}_2/\text{CDW}} = \frac{n_{\text{O}_2} \cdot \text{MW}_{\text{O}_2}}{\
 $$
 
 $$
-f = \frac{0.11 \times 0.443}{0.0051 \times 2.044 + 0.11 \times 0.443} = \frac{0.04873}{0.01042 + 0.04873} = \frac{0.04873}{0.05915} = 0.824
+f = \frac{0.12 \times 0.443}{0.005 \times 2.044 + 0.12 \times 0.443} = \frac{0.05316}{0.01022 + 0.05316} = \frac{0.05316}{0.06338} = 0.839
 $$
 
-82.4% of the liquid flow goes through DC101 (H₂ side); 17.6% through DC102 (CO₂ + O₂ side).
+83.9% of the liquid flow goes through DC101 (H₂ side); 16.1% through DC102 (CO₂ + O₂ side).
 
 ### 2.5 Effective dissolved H₂ at R101 inlet
 
 After DC101 and DC102 recombine in MX101, the dissolved H₂ concentration is diluted by the O₂/CO₂ side (which carries no H₂):
 
 $$
-[\text{H}_2]_{\text{inlet}} = f \times S_{f,\text{H}_2} = 0.824 \times 0.0051 = 0.00420 \text{ g/L}
+[\text{H}_2]_{\text{inlet}} = f \times S_{f,\text{H}_2} = 0.839 \times 0.005 = 0.00420 \text{ g/L}
 $$
 
 This is the effective S_f that `PerfusionBioreactor._run()` reads from the inlet stream via `_calculate_inlet_S_f()`.
@@ -152,7 +152,7 @@ The gas fermentation reactor design uses the same 9-step chain as `design_reacto
 |-----------|--------|-------|--------|
 | Max specific growth rate | μmax | 0.12 h⁻¹ | Framework §9.1 |
 | Biomass yield on H₂ | Yxs | 2.26 g/g | Derived from molar stoichiometry §9.5a |
-| Dissolved H₂ feed conc. | S_f | 0.0051 g/L | Henry's law, 4 atm, §4a |
+| Dissolved H₂ feed conc. | S_f | 0.005 g/L | Henry's law, 4 atm, §4a |
 | H₂ conversion extent | ε | 0.99 | Framework §9.2 |
 | Dilution rate margin | D_margin | 0.80 | Framework §9.2 |
 
@@ -173,7 +173,7 @@ $$
 Because S_f is fixed, X* is solved forward rather than backward:
 
 $$
-X^* = Y_{xs} \times S_f \times \varepsilon = 2.26 \times 0.0051 \times 0.99 = 0.01139 \text{ g/L}
+X^* = Y_{xs} \times S_f \times \varepsilon = 2.26 \times 0.005 \times 0.99 = 0.01119 \text{ g/L}
 $$
 
 This is 2,000× lower than fructose's X* = 24.0 g/L and reflects the physical constraint of H₂ solubility at 4 atm.
@@ -181,7 +181,7 @@ This is 2,000× lower than fructose's X* = 24.0 g/L and reflects the physical co
 ### Step 3 — Residual dissolved H₂ S*
 
 $$
-S^* = S_f \times (1 - \varepsilon) = 0.0051 \times 0.01 = 0.000051 \text{ g/L}
+S^* = S_f \times (1 - \varepsilon) = 0.005 \times 0.01 = 0.000050 \text{ g/L}
 $$
 
 ### Step 6 — Required volumetric throughput Q_design
@@ -189,17 +189,17 @@ $$
 To deliver 26,316 MT CDW/yr at X* = 0.01139 g/L:
 
 $$
-Q_{\text{design}} = \frac{26{,}316 \times 10^6}{7{,}752 \times 0.01139 \times 1{,}000} = \frac{26.316 \times 10^9}{88{,}297} \approx 298{,}000 \text{ m}^3/\text{h}
+Q_{\text{design}} = \frac{26{,}316 \times 10^6}{7{,}752 \times 0.01119 \times 1{,}000} = \frac{26.316 \times 10^9}{86{,}722} \approx 303{,}400 \text{ m}^3/\text{h}
 $$
 
-This is the largest single number in the model. Liquid routes require Q = 142–432 m³/h. Gas fermentation requires Q ≈ 298,000 m³/h — roughly 1,000× more liquid per unit time — entirely because X* is so low.
+This is the largest single number in the model. Liquid routes require Q = 142–432 m³/h. Gas fermentation requires Q ≈ 303,400 m³/h — roughly 1,000× more liquid per unit time — entirely because X* is so low.
 
 ### Corrected Q for DC split geometry
 
-`design_gas_fermentation_reactor()` computes Q_design assuming all Q carries dissolved H₂ at S_f_H2. But only fraction f = 0.824 of Q passes through DC101; the remaining (1 − f) carries O₂/CO₂ only. After MX101 recombination, [H₂]_inlet = f × S_f_H2 < S_f_H2. To compensate, total process liquid Q must be increased:
+`design_gas_fermentation_reactor()` computes Q_design assuming all Q carries dissolved H₂ at S_f_H2. But only fraction f = 0.839 of Q passes through DC101; the remaining (1 − f) carries O₂/CO₂ only. After MX101 recombination, [H₂]_inlet = f × S_f_H2 < S_f_H2. To compensate, total process liquid Q must be increased:
 
 $$
-Q_{\text{corrected}} = \frac{Q_{\text{design}}}{f} = \frac{298{,}000}{0.824} \approx 361{,}700 \text{ m}^3/\text{h}
+Q_{\text{corrected}} = \frac{Q_{\text{design}}}{f} = \frac{303{,}400}{0.839} \approx 361{,}600 \text{ m}^3/\text{h}
 $$
 
 Q_corrected drives all liquid feed sizing (water makeup, vessel throughput). Q_design remains the reference for production-proportional quantities (nutrients, NH₃ mass flows).
@@ -210,9 +210,9 @@ Using the CSTR formula:
 
 | Quantity | Value |
 |----------|-------|
-| V_total (CSTR) | 298,000 × 10.42 / 0.80 = 3,882,000 m³ |
-| N_capacity (CSTR) | ⌈3,882,000 / 355⌉ = 10,934 |
-| N_total (CSTR) | 10,935 |
+| V_total (CSTR) | 303,400 × 10.42 / 0.80 = 3,951,000 m³ |
+| N_capacity (CSTR) | ⌈3,951,000 / 355⌉ = 11,130 |
+| N_total (CSTR) | 11,131 |
 
 These CSTR-equivalent numbers are **not used for bioreactor costing**. They represent what would be needed without perfusion. The actual vessel count is computed by `PerfusionBioreactor._run()` using perfusion kinetics (§6). The CSTR design values are used only for pre-simulation seed-train sizing cross-checks.
 
@@ -278,10 +278,10 @@ $$
 
 | Design | Cell density | Ratio |
 |--------|-------------|-------|
-| CSTR (S_f only) | X* = 0.0114 g/L | 1× |
+| CSTR (S_f only) | X* = 0.0112 g/L | 1× |
 | Perfusion (this model) | X ≈ 0.250 g/L | ~22× |
 
-Perfusion achieves ~22× the CSTR cell density. This is the entire rationale for the perfusion design — without it, vessel count would be ~10,934 rather than ~499.
+Perfusion achieves ~22× the CSTR cell density. This is the entire rationale for the perfusion design — without it, vessel count would be ~11,130 rather than ~500.
 
 ### 6.4 Volumetric productivity
 
@@ -341,13 +341,13 @@ $$
 
 where F_total/vessel = Q_corrected × 1000 / N. Both F and F_b must be positive; `PerfusionBioreactor._run()` raises `RuntimeError` if infeasible.
 
-For the current design (N = 499, Q_corrected = 361,700 m³/h):
+For the current design (N = 500, Q_corrected = 361,600 m³/h):
 
-$$F_{\text{total/vessel}} = \frac{361{,}700{,}000}{499} \approx 724{,}850 \text{ L/h}$$
+$$F_{\text{total/vessel}} = \frac{361{,}600{,}000}{500} = 723{,}200 \text{ L/h}$$
 
-$$F = \frac{724{,}850 - 0.096 \times 284{,}000}{0.97} = \frac{697{,}586}{0.97} \approx 719{,}160 \text{ L/h}$$
+$$F = \frac{723{,}200 - 0.096 \times 284{,}000}{0.97} = \frac{695{,}936}{0.97} \approx 717{,}460 \text{ L/h}$$
 
-$$F_b = 724{,}850 - 719{,}160 \approx 5{,}690 \text{ L/h}$$
+$$F_b = 723{,}200 - 717{,}460 \approx 5{,}740 \text{ L/h}$$
 
 $$D_{\text{actual}} = F / V_{\max} \approx 2.53 \text{ h}^{-1}$$
 
@@ -470,10 +470,10 @@ $$
 F_{\max} = D_{\text{perf}} \times V_{\max,L} = 2.560 \times 284{,}000 = 727{,}040 \text{ L/h per vessel}
 $$
 
-Required total flow = Q_corrected × 1000 = 361,700 m³/h × 1000 = 361,700,000 L/h:
+Required total flow = Q_corrected × 1000 = 361,600 m³/h × 1000 = 361,600,000 L/h:
 
 $$
-N_{\text{flow}} = \left\lceil \frac{361{,}700{,}000}{727{,}040} \right\rceil = \left\lceil 498 \right\rceil = 498
+N_{\text{flow}} = \left\lceil \frac{361{,}600{,}000}{727{,}040} \right\rceil = \left\lceil 497.4 \right\rceil = 498
 $$
 
 ### 7.2 Target-based N
@@ -504,7 +504,7 @@ $$
 N_{\text{total}} = 498 + 1 = 499
 $$
 
-The simulation output is **499** (minor differences from this hand calculation reflect floating-point arithmetic and iterative recalculation of X_final using the solved D_actual after `_solve_flow_balance()`).
+The simulation output is **500** (1 vessel above this hand-calculation estimate; the difference reflects floating-point arithmetic in the iterative recalculation of X_final using the solved D_actual after `_solve_flow_balance()`).
 
 **For comparison:**
 
@@ -513,9 +513,9 @@ The simulation output is **499** (minor differences from this hand calculation r
 | Fructose | 4 | High μmax, high X* |
 | Acetate | 10 | Moderate μmax, lower X* |
 | Formate | **53** | Moderate μmax, inhibition-constrained X* = 1.62 g/L (S\*\_max = 3.0 g/L — Grunwald 2015) |
-| Gas ferm | ~499 | Very low X* from H₂ solubility limit |
+| Gas ferm | ~500 | Very low X* from H₂ solubility limit |
 
-Gas fermentation needs ~9× more vessels than the next most capital-intensive liquid route (formate, N_total = 53), even with perfusion. (499 / 53 ≈ 9.4×.) Prior to the inhibition constraint, formate was ~12 vessels and the ratio was ~41×.
+Gas fermentation needs ~9× more vessels than the next most capital-intensive liquid route (formate, N_total = 53), even with perfusion. (500 / 53 ≈ 9.4×.) Prior to the inhibition constraint, formate was ~12 vessels and the ratio was ~41×.
 
 ---
 
@@ -628,10 +628,10 @@ where V_work_prod = V_max × V_wf = 355 × 0.80 = 284 m³ per production vessel.
 
 ### 10.3 Number of concurrent seed trains
 
-With N_total ≈ 499 vessels, 2 restarts/yr each, and SEED_BATCH_DURATION_H = 72 h:
+With N_total ≈ 500 vessels, 2 restarts/yr each, and SEED_BATCH_DURATION_H = 72 h:
 
 $$
-N_{\text{seed\_trains}} = \left\lceil \frac{499 \times 2 \times 72}{7{,}752} \right\rceil = \left\lceil \frac{71{,}856}{7{,}752} \right\rceil = \lceil 9.27 \rceil = 10
+N_{\text{seed\_trains}} = \left\lceil \frac{500 \times 2 \times 72}{7{,}752} \right\rceil = \left\lceil \frac{72{,}000}{7{,}752} \right\rceil = \lceil 9.29 \rceil = 10
 $$
 
 Gas fermentation requires ~10 concurrent seed trains, vs. 1 for each liquid route. This reflects the large vessel count requiring many simultaneous restart events.
@@ -641,7 +641,7 @@ Gas fermentation requires ~10 concurrent seed trains, vs. 1 for each liquid rout
 Identical topology to liquid routes (SM101 → SHX101 → SHP101 → SHX102 → SSP101/SSP102 → SR101/102/103). The steady-state τ_seed:
 
 $$
-\tau_{\text{seed}} = \frac{h_{\text{eff}}}{N_{\text{total}} \times \text{RESTARTS\_PER\_YEAR}} = \frac{7{,}752}{499 \times 2} = 7.77 \text{ h}
+\tau_{\text{seed}} = \frac{h_{\text{eff}}}{N_{\text{total}} \times \text{RESTARTS\_PER\_YEAR}} = \frac{7{,}752}{500 \times 2} = 7.75 \text{ h}
 $$
 
 This τ_seed is used in `SeedBioreactor._init()` so BioSTEAM assigns a working volume matching the batch operating volume of each stage.
@@ -685,13 +685,13 @@ Identical financial structure to liquid routes (Turton BM method: FCI = 1.18 × 
 | Metric | Expected range | Notes |
 |--------|---------------|-------|
 | MSP ($/kg SCP) | $80.19 | Dominated by capital (WWT, vessels) |
-| FCI ($M) | Very large | ~499 vessels at V_max = 355 m³ each |
+| FCI ($M) | Very large | ~500 vessels at V_max = 355 m³ each |
 | Capital charge ($/kg SCP) | Largest single OPEX category | Reflects high N_total |
-| Electricity ($/kg SCP) | Very large | Aeration + cooling for ~499 vessels |
+| Electricity ($/kg SCP) | Very large | Aeration + cooling for ~500 vessels |
 
 ### Checking R101 design — Equipment sheet
 
-- R101 row: N (parallel) should be ~499.
+- R101 row: N (parallel) should be ~500.
 - Reactor volume per unit: V_max = 284,000 L working volume per vessel.
 - Perfusion dilution rate D: ~2.56 h⁻¹ (not 0.096 h⁻¹ — the CSTR HRT is not directly reported).
 - Cell density X: ~0.25 g/L (vs. CSTR X* ~0.011 g/L — perfusion enrichment visible here).
@@ -723,11 +723,11 @@ The Cash Flow sheet (sheet 8 in `gas_fermentation_results.xlsx`) contains the fu
 
 ## 15. Common questions
 
-**Q: Why does gas fermentation have ~499 vessels when liquid routes need only 4–53?**
+**Q: Why does gas fermentation have ~500 vessels when liquid routes need only 4–53?**
 
-Two compounding factors. First, X* = 0.01139 g/L (CSTR design) is ~2,000× lower than fructose's X* = 24.0 g/L, and ~14× lower than the formate route's inhibition-constrained X* = 1.62 g/L. This means the bioreactor must process far more liquid per unit of biomass output than any liquid route. Perfusion reduces this by ~22× (to ~499 vessels) by retaining cells and achieving X ≈ 0.250 g/L. Without perfusion, the CSTR-equivalent count would be ~10,935. The remaining ~499 are irreducible at this pressure and at current H₂ electrolysis pricing — they are the consequence of physics (H₂ solubility), not biology or economics.
+Two compounding factors. First, X* = 0.01119 g/L (CSTR design) is ~2,000× lower than fructose's X* = 24.0 g/L, and ~14× lower than the formate route's inhibition-constrained X* = 1.62 g/L. This means the bioreactor must process far more liquid per unit of biomass output than any liquid route. Perfusion reduces this by ~22× (to ~500 vessels) by retaining cells and achieving X ≈ 0.250 g/L. Without perfusion, the CSTR-equivalent count would be ~11,131. The remaining ~500 are irreducible at this pressure and at current H₂ electrolysis pricing — they are the consequence of physics (H₂ solubility), not biology or economics.
 
-Note: The formate route's N_total was revised from 12 to 53 by adding a substrate inhibition constraint (S\*\_max = 3.0 g/L from Grunwald et al. 2015). The gas fermentation comparison holds: ~499 vs. 53 (formate) = ~9.4× still a large gap driven by H₂ solubility physics.
+Note: The formate route's N_total was revised from 12 to 53 by adding a substrate inhibition constraint (S\*\_max = 3.0 g/L from Grunwald et al. 2015). The gas fermentation comparison holds: ~500 vs. 53 (formate) = ~9.4× still a large gap driven by H₂ solubility physics.
 
 **Q: Why is there no CO₂ vent for gas fermentation when all three liquid routes produce a CO₂ vent?**
 
@@ -743,7 +743,7 @@ The nutrients concentration entering R101 is ~0.004 g/L (nutrients_kgh / Q × 10
 
 **Q: Why does gas fermentation have 10 seed trains when liquid routes have only 1?**
 
-N_seed_trains scales with N_total × RESTARTS_PER_YEAR × SEED_BATCH_DURATION_H / h_eff. For liquid routes (N_total = 4–12), one seed train is never "busy" with two overlapping restart events simultaneously. For gas fermentation (N_total ≈ 499), 499 × 2 = 998 restart events per year happen, averaging one restart every 7.8 h — shorter than the 72 h seed batch. Multiple concurrent restarts require multiple concurrent seed trains.
+N_seed_trains scales with N_total × RESTARTS_PER_YEAR × SEED_BATCH_DURATION_H / h_eff. For liquid routes (N_total = 4–12), one seed train is never "busy" with two overlapping restart events simultaneously. For gas fermentation (N_total ≈ 500), 500 × 2 = 1,000 restart events per year happen, averaging one restart every 7.75 h — shorter than the 72 h seed batch. Multiple concurrent restarts require multiple concurrent seed trains.
 
 ---
 

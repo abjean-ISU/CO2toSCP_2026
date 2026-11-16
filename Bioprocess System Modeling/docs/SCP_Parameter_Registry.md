@@ -260,7 +260,7 @@ These constants are internal to the gas fermentation model (`models/gas_fermenta
 | Parameter | Value | Units | Basis | Framework |
 |-----------|-------|-------|-------|-----------|
 | Operating pressure (droplet column) | 4 | atm | Pre-saturation pressure for H₂ dissolution | §4, §4a |
-| Dissolved H₂ feed concentration (S_f) | 0.0051 | g/L | Henry's law at 4 atm operating pressure | §4 |
+| Dissolved H₂ feed concentration (S_f) | 0.005 | g/L | Henry's law at 4 atm operating pressure | §4 |
 | UF membrane Q_max (per unit) | 378,500 | m³/d | Guo et al. (2014) Table 1 validated range upper bound | §4a |
 | UF capital correlation α | 1.003 | — | Guo et al. (2014) Table 1 | §4a |
 | UF capital correlation β | 0.830 | — | Guo et al. (2014) Table 1 | §4a |

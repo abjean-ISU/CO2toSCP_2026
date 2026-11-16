@@ -92,13 +92,13 @@ where Q = required volumetric throughput (m³/h) and τ = 1/D = 1/(D_margin × �
 | Fructose | 0.176 | 5.68 | 24.0 | 142 | 1,005 | 3 | 4 |
 | Acetate | 0.120 | 8.33 | 11.25 | 302 | 3,140 | 9 | 10 |
 | Formate | 0.144 | 6.94 | **1.62** | **2,096** | **18,183** | **52** | **53** |
-| Gas ferm | 0.096 | 10.4 | very low† | very high | very large | ~491 | ~492 |
+| Gas ferm | 0.096 | 10.4 | very low† | very high | very large | ~499 | ~500 |
 
 Formate values revised by inhibition constraint (S\*\_max = 3.0 g/L — Grunwald 2015). The titer-forward result would have been X* = 7.875, Q = 432, V_total = 3,742, N_total = 12 — but S* at those conditions = 14.58 g/L >> 3.0 g/L ceiling, putting the CSTR well past the extrapolated zero-yield point.
 
-† Gas fermentation titer is set by dissolved H₂ at Henry's law saturation; at 4 atm the dissolved H₂ concentration is 0.0051 g/L, and even with Yxs = 2.26, the achievable titer is on the order of 0.01 g/L — orders of magnitude lower than the liquid-substrate routes, requiring an enormous volumetric throughput and vessel count.
+† Gas fermentation titer is set by dissolved H₂ at Henry's law saturation; at 4 atm the dissolved H₂ concentration is 0.005 g/L, and even with Yxs = 2.26, the achievable titer is on the order of 0.01 g/L — orders of magnitude lower than the liquid-substrate routes, requiring an enormous volumetric throughput and vessel count.
 
-The vessel count for gas fermentation (~492) is not a modeling error — it reflects the physical constraint that H₂ has very low aqueous solubility regardless of operating pressure or engineering improvements within the model's scope.
+The vessel count for gas fermentation (~500) is not a modeling error — it reflects the physical constraint that H₂ has very low aqueous solubility regardless of operating pressure or engineering improvements within the model's scope.
 
 ---
 
@@ -161,13 +161,13 @@ Formate's MSP is 180% higher than fructose and 323% higher than acetate, despite
 
 Gas fermentation's MSP is 14× fructose's and is in a different cost regime from the three liquid routes. The root cause is not the feedstock price (H₂ is expensive at $4.83/kg but Yxs = 2.26 gives favorable substrate economics: ~$2.14/kg SCP substrate cost). The root cause is H₂ aqueous solubility.
 
-H₂ has very low aqueous solubility. At 4 atm operating pressure, the dissolved H₂ concentration at the bioreactor inlet is ~0.0051 g/L (Henry's law). Even though *C. necator* fully converts this dissolved H₂ (ε = 0.99) and has a high Yxs, the operating biomass titer is constrained to be proportional to dissolved H₂ availability — far below what the organism could achieve if H₂ were supplied in abundance. The result is that the system must pump enormous volumes of liquid through the bioreactors to deliver enough biomass per hour, requiring ~492 vessels.
+H₂ has very low aqueous solubility. At 4 atm operating pressure, the dissolved H₂ concentration at the bioreactor inlet is ~0.005 g/L (Henry's law). Even though *C. necator* fully converts this dissolved H₂ (ε = 0.99) and has a high Yxs, the operating biomass titer is constrained to be proportional to dissolved H₂ availability — far below what the organism could achieve if H₂ were supplied in abundance. The result is that the system must pump enormous volumes of liquid through the bioreactors to deliver enough biomass per hour, requiring ~500 vessels.
 
-With ~492 vessels at V_max = 355 m³ each, the fixed capital investment is very large. Capital-related charges (depreciation, tax, required return — captured in the "Capital charge" OPEX category) dominate the MSP.
+With ~500 vessels at V_max = 355 m³ each, the fixed capital investment is very large. Capital-related charges (depreciation, tax, required return — captured in the "Capital charge" OPEX category) dominate the MSP.
 
 The OAT SA confirms the capital-driven nature: water recycle fraction (+$7.161/−$4.295/kg, +8.9%/−5.4%), electricity price (+$8.855/−$2.254/kg, +11.0%/−2.8%), capital cost (TCI ±35%: −$5.695/+$4.989/kg, −7.1%/+6.2%), and centrifuge recovery (+$4.032/−$3.296/kg, +5.0%/−4.1%) are all large — consistent with the very large physical scale of the plant.
 
-**Why electricity matters so much for gas fermentation:** The ~492 vessels each require aeration (for O₂ supply) and cooling. With compressors and heat exchangers sized for 492 vessels, total electrical draw is large; the OAT SA electricity swing (+$8.9/kg high, −$2.3/kg low at base $0.032/kWh) is ~145× larger than the fructose electricity high swing (+$0.061/kg).
+**Why electricity matters so much for gas fermentation:** The ~500 vessels each require aeration (for O₂ supply) and cooling. With compressors and heat exchangers sized for 500 vessels, total electrical draw is large; the OAT SA electricity swing (+$8.9/kg high, −$2.3/kg low at base $0.032/kWh) is ~145× larger than the fructose electricity high swing (+$0.061/kg).
 
 **Summary:** Gas fermentation's MSP is set by the physics of H₂ dissolution, not by biology or price. No realistic improvement to Yxs, μmax, or feedstock price changes the fundamental H₂ solubility constraint that forces the large vessel count and capital cost.
 
@@ -189,11 +189,11 @@ The OAT SA tornado charts reveal which parameters matter most for each route and
 
 ### 4.2 Parameters where gas fermentation diverges sharply
 
-**Electricity price:** Liquid routes show ≤1.6% MSP swing; gas fermentation shows +11.0% at the high electricity price — the largest single high-direction swing of any parameter. The electricity demand for 492 large aerated vessels dominates.
+**Electricity price:** Liquid routes show ≤1.6% MSP swing; gas fermentation shows +11.0% at the high electricity price — the largest single high-direction swing of any parameter. The electricity demand for 500 large aerated vessels dominates.
 
 **Capital cost (TCI ±35%):** Liquid routes show 2–5% swing; gas fermentation shows −7.1%/+6.2%. No longer the largest-swing parameter for gas fermentation (water recycle and electricity now exceed it).
 
-**Water recycle fraction:** Small for liquid routes (≤8.1%); +8.9%/−5.4% for gas fermentation — the largest total swing range of any parameter for that route. At the scale of 492 vessels, water treatment and recycle flows are large enough that changing the recycle fraction substantially changes the WWT operating cost contribution.
+**Water recycle fraction:** Small for liquid routes (≤8.1%); +8.9%/−5.4% for gas fermentation — the largest total swing range of any parameter for that route. At the scale of 500 vessels, water treatment and recycle flows are large enough that changing the recycle fraction substantially changes the WWT operating cost contribution.
 
 **Restart frequency:** Very small for liquid routes (<0.3%); for gas fermentation the asymmetric swing (+3.4%/−0.4%) reflects the large N+1 redundancy overhead — more restarts mean more time in the spare vessel state, which affects capacity utilization and seed-train sizing.
 
@@ -211,7 +211,7 @@ The OAT SA tornado charts reveal which parameters matter most for each route and
 |--------|---------|---------|---------|---------|
 | Primary MSP driver | Feedstock | Feedstock + Capital | ε + Feedstock (inhibition-constrained) | Capital (H₂ solubility) |
 | Substrate cost (p/Yxs, $/kg SCP) | $3.63 | $1.44 | $5.83 | $2.14 |
-| N_total (vessels) | 4 | 10 | **53** | ~492 |
+| N_total (vessels) | 4 | 10 | **53** | ~500 |
 | Capital sensitivity (TCI ±35%) | ±2.0% | ±4.0% | **±5.1%** | ±7.1% |
 | Feedstock sensitivity (±50%) | ±34.8% | ±21.6% | **±20.9%** | ±1.4% |
 | ε sensitivity (0.80–0.95) | +10.6%/−4.3% | +37.0%/−2.8% | **+65.0%/−27.1%** | +4.5% (hi only) |
