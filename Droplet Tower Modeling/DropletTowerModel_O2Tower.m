@@ -6,7 +6,7 @@ clear all;close all;clc;
 
 %Import droplet size data OR Designate mean droplet diameter (mm) - 
 % select relavent input
-%DropletSize = readmatrix(['C:\Users\anbarron\Box\Research\Projects\SCP\Modeling\Droplet Tower Modeling\DropletDiameterData.csv']); %droplet diameter data (mm) 
+%DropletSize = readmatrix(['C:\Users\anbarron\Box\Research\Projects\SCP\Process Modeling\Droplet Tower Modeling\DropletDiameterData.csv']); %droplet diameter data (mm) 
 DropletSize = 1.6; %mean droplet diameter (mm)
 
 %Input Tower Parameters 
@@ -69,9 +69,13 @@ y0 = [v0,c0,t0];
 Csat = P/H*mass_Gas/1000; %g/L
 Csat = 0.85*Csat; %adjusting for mineral media
 g = 9.8; %acceleration due to gravity (m/s2)
-rho_g = 1.184; %density of air (kg/m3)
+R_gas = 8.314462; %J/mol-K
+P_total = 4;                       %total column pressure (atm) - sets gas properties for drag
+y_O2 = 3.9/P_total; y_CO2 = 0.1/P_total;
+M_mix = y_O2*32 + y_CO2*44.01;     %g/mol
+rho_g = P_total*101325*(M_mix/1000)/(8.314462*T); %mixture density (kg/m3)
+mu_g  = 2.05E-5;                   %mixture dynamic viscosity (Pa s), Wilke
 rho_l = 997; %density of water (kg/m3) 
-mu_g = 1.53E-5; %viscocity of air (m2/s)
 DAB = DAB; %diffusion coefficient (m2/s)
 s_tension = 72.8; %water surface tenstion (g/s2)
 
@@ -88,17 +92,17 @@ for i=1:length(GQMOM_model_x)
     t_angelo_ri_weighted(:,i) = t_angelo_ri(:,i)*GQMOM_model_w(i);
 end
 
-%Modeling <v(x)> and <c(x)> using weights
-v_x = sum(v_angelo_ri_weighted,2);
-c_x = sum(c_angelo_ri_weighted,2);
-t_x = sum(t_angelo_ri_weighted,2);
+%volume-weighted (mixing-cup) averages for concentration and residence time
+volW = GQMOM_model_w(:).*GQMOM_model_x(:).^3; volW = volW/sum(volW); %liquid volume fraction per size
+v_x = sum(v_angelo_ri_weighted,2);   %number-weighted mean droplet velocity (unchanged)
+c_x = c_angelo_ri*volW;              %outlet concentration of the collected liquid (g/L)
+t_x = t_angelo_ri*volW;              %volume-weighted residence time (s)
 
 %system parameters 
 tower_v_tot = pi*(towerDiameter/2)^2*towerHeight; %tower volume (m3)
 
 %droplet parameters
-droplet_r = sum(GQMOM_model_x.*GQMOM_model_w); %average droplet radius (m)
-droplet_v = 4/3*pi*droplet_r^3; %average droplet volume (m3)
+droplet_v = sum(GQMOM_model_w(:).*(4/3)*pi.*GQMOM_model_x(:).^3); %mean droplet volume (m3), Eq. 24
 
 %Liquid holdup parameters
 droplet_v_tot_m3 = Q*max(t_x); %total droplet (LH) volume (m3)
