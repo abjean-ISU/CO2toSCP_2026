@@ -674,7 +674,7 @@ def plot_cross_route_tornado(
 # ---------------------------------------------------------------------------
 
 # Gas fermentation grid: electricity_price × contingency_fee_factor — Framework §11
-_GAS_ELEC_GRID = [0.018, 0.030, 0.045, 0.065, 0.087]        # $/kWh (§9.4 SA range)
+_GAS_ELEC_GRID = [0.018, 0.032, 0.045, 0.065, 0.087]        # $/kWh (§9.4 SA range; 0.032 = base)
 _GAS_CONT_GRID = [0.767, 0.964, 1.180, 1.389, 1.591]         # 1.18 × [0.65,0.817,1.0,1.177,1.35]
 
 # Liquid-route grid: feedstock_price factor × epsilon — Framework §11

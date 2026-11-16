@@ -27,12 +27,10 @@ This library contains BioSTEAM-based techno-economic analysis (TEA) models compa
 # Run all four route models and generate per-route Excel workbooks
 python run_models.py
 
-# Run one-at-a-time sensitivity analysis (91 simulations)
+# Run one-at-a-time sensitivity analysis (91 simulations, ~15 min)
 python sensitivity_analysis.py
 
 # Run additional comparative analyses (cost breakdown, scale curve, 2D heatmaps)
-# Note: plot_cross_route_tornado reads outputs/sensitivity_results.xlsx,
-# so sensitivity_analysis.py must be run first.
 python additional_analyses.py
 ```
 
@@ -493,16 +491,16 @@ CO2 feed ─┘                  ↓
                               → D101 (SprayDryer)
                               → ST101 (product storage)
 [Gas sterilization: UFS101 (UltrafiltrationSterilizer)]
-[Seed train: gas-adapted — N_seed_trains ≈ 9 (492 vessels need concurrent seeding)]
+[Seed train: gas-adapted — N_seed_trains ≈ 10 (500 vessels need concurrent seeding)]
 [WWT: same topology as liquid routes]
 ```
 
 **Key differences from liquid routes:**
 - Feed is gaseous H₂/CO₂, dissolved into the liquid phase by a droplet column contactor
-- Titer is set by dissolved H₂ concentration (Henry's law, S_f = 0.0051 g/L at 4 atm) × Yxs × ε — not by a titer target
-- Very high vessel count (~492) due to low titer and slow growth; dominates capital cost
+- Titer is set by dissolved H₂ concentration (Henry's law, S_f = 0.005 g/L at 4 atm) × Yxs × ε — not by a titer target
+- Very high vessel count (~500) due to low titer and slow growth; dominates capital cost
 - UltrafiltrationSterilizer replaces heat sterilization (avoid H₂ in heat exchangers)
-- N_seed_trains ≈ 9 (9 concurrent seed trains needed to cover 492 lines × 2 restarts/yr)
+- N_seed_trains ≈ 10 (10 concurrent seed trains needed to cover 500 lines × 2 restarts/yr)
 
 ---
 
@@ -526,6 +524,19 @@ For full governing equations, see `docs/SCP_Perfusion_Bioreactor_Math.md`.
 
 ---
 
+### Test and scratch files (root level)
+
+These files are development artifacts and are not part of the main analysis pipeline.
+
+| File | Purpose |
+|------|---------|
+| `test_temp.py` | Ad-hoc temperature/utility sanity checks |
+| `test_wwt.py` | WWT subsystem unit tests |
+| `test_n.py` | Vessel count / N_reactors extraction checks |
+| `sanity_check_tmp.py` | One-off mass balance verification |
+
+---
+
 ## Outputs directory
 
 All generated files land in `outputs/`. The directory is created automatically on first run.
@@ -538,8 +549,8 @@ All generated files land in `outputs/`. The directory is created automatically o
 | `outputs/{route}_pfd.png / .html` | `run_models.py` | Process flow diagram (requires Graphviz) |
 | `outputs/cross_route_comparison.xlsx` | `run_models.py` | Summary, capital, OPEX across routes |
 | `lca/{RouteTitle}_InventoryAssessment.xlsx` | `run_models.py` | LCA inventory — Capital Goods (NAICS, 2012 USD/kg SCP) + Operational Flows (per-hour rates) |
-| `outputs/sensitivity_results.xlsx` | `sensitivity_analysis.py` | OAT Results + Tornado Summary + Base Case Design |
-| `outputs/sensitivity_tornado_{route}.png` | `sensitivity_analysis.py` | 4 per-route tornado charts |
+| `sensitivity_results.xlsx` | `sensitivity_analysis.py` | OAT Results + Tornado Summary + Base Case Design |
+| `sensitivity_tornado_{route}.png` | `sensitivity_analysis.py` | 4 per-route tornado charts |
 | `cost_breakdown.png / .xlsx` | `additional_analyses.py` | Stacked-bar MSP decomposition |
 | `scale_curve.png / .xlsx` | `additional_analyses.py` | MSP vs. production scale (5k–100k MT/yr) |
 | `cross_route_tornado.png` | `additional_analyses.py` | Cross-route OAT swing comparison |
@@ -549,8 +560,6 @@ All generated files land in `outputs/`. The directory is created automatically o
 ---
 
 ## Dependencies
-
-**Python:** ≥3.10
 
 ```
 biosteam        # process simulation and TEA
@@ -564,7 +573,6 @@ graphviz        # PFD export (optional; degrades gracefully if absent)
 Install with:
 ```bash
 pip install biosteam pandas openpyxl matplotlib
-pip install -e .   # installs common/, models/, perfusion_bioreactor/ as importable packages
 # Graphviz: https://graphviz.org/download/ (system package, not pip)
 ```
 
