@@ -184,7 +184,7 @@ SEED_BATCH_DURATION_H: float = 72.0
 # Principles, 2nd ed., §14.4).  Governs N_seed_trains — the number of concurrent
 # seed preparations needed to cover N_total × RESTARTS_PER_YEAR restart events/yr:
 #   N_seed_trains = ceil(N_total × RESTARTS_PER_YEAR × SEED_BATCH_DURATION_H / op_hours)
-# For gas fermentation (N_total ≈ 493): N_seed_trains ≈ 9.
+# For gas fermentation (N_total ≈ 500): N_seed_trains ≈ 10.
 # For liquid routes (N_total ≈ 6–39): N_seed_trains = 1.
 # Engineering judgment — user-confirmed 2026-08-07.
 

@@ -231,7 +231,7 @@ def design_gas_fermentation_reactor(
         Biomass yield on H2 (Framework §9.1).
     S_f : g/L
         Dissolved H2 feed concentration, fixed by Henry's law at the
-        droplet contactors (0.0051 g/L at 4 atm per Framework §4a).  Caller
+        droplet contactors (0.005 g/L at 4 atm per Framework §4a).  Caller
         computes this from operating conditions and passes it in.
     epsilon : 0–1
         H2 conversion extent (Framework §9.2).
